@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+
+# Next.js build output
+.next/
+out/
+dist/
+tsconfig.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+.env.production
+
+# Supabase local runtime
+supabase/.branches/
+supabase/.temp/
+
+# Caches
+.turbo/
+.vercel/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+
+# Project docs (not for public repo)
+PLAN.md
+AGENTS.md
+sign-off-plan.md
+ISSUES.md
+CLAUDE.md
+
+# Claude Code local config
+.claude/

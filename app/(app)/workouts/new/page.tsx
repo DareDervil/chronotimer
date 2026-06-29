@@ -1,0 +1,16 @@
+import { createClient } from '@/lib/supabase/server'
+import { WorkoutBuilder } from '@/components/builder/workout-builder'
+
+export const metadata = { title: 'New Workout — Chronicon' }
+
+export default async function NewWorkoutPage() {
+  const supabase = await createClient()
+
+  const { data: exercises } = await supabase
+    .from('exercises')
+    .select('*')
+    .order('category')
+    .order('name')
+
+  return <WorkoutBuilder exercises={exercises ?? []} />
+}
