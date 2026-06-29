@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Chronicon — Fitness Timer',
+  title: 'Chronotimer — Fitness Timer',
   description: 'Build and run custom workout timers with drag & drop',
 }
 

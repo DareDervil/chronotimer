@@ -92,11 +92,12 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
     if (countdown > 0) beep.tick()
   }, [countdown])
 
-  // Last-3-seconds tick beep (suppressed for rep-based steps)
+  // Last-3-seconds tick beep + end chime (suppressed for rep-based steps)
   useEffect(() => {
     const step = steps[stepIndex]
     if (!step || status !== 'running' || step.isReps) return
-    if (timeLeft <= 3 && timeLeft > 0) beep.tick()
+    if (timeLeft === 1) beep.end()
+    else if (timeLeft <= 3 && timeLeft > 1) beep.tick()
   }, [timeLeft, stepIndex, steps, status])
 
   function handleBack() {

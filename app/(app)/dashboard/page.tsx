@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
-export const metadata = { title: 'Dashboard — Chronicon' }
+export const metadata = { title: 'Dashboard — Chronotimer' }
 
 export default async function DashboardPage() {
   const supabase = await createClient()

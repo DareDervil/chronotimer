@@ -28,11 +28,31 @@ function playTone(frequency: number, duration: number, gain = 0.4) {
 }
 
 export const beep = {
-  /** Three short high beeps — go signal */
+  /** Bell — GO signal and work step transitions */
   go() {
-    playTone(880, 0.1)
-    setTimeout(() => playTone(880, 0.1), 150)
-    setTimeout(() => playTone(1100, 0.2), 300)
+    const ctx = getAudioContext()
+    const partials = [
+      { freq: 880, gain: 0.55, decay: 1.8 },
+      { freq: 1320, gain: 0.25, decay: 1.2 },
+      { freq: 2200, gain: 0.12, decay: 0.8 },
+    ]
+    partials.forEach(({ freq, gain, decay }) => {
+      const osc = ctx.createOscillator()
+      const gainNode = ctx.createGain()
+      osc.connect(gainNode)
+      gainNode.connect(ctx.destination)
+      osc.type = 'sine'
+      osc.frequency.setValueAtTime(freq, ctx.currentTime)
+      gainNode.gain.setValueAtTime(gain, ctx.currentTime)
+      gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + decay)
+      osc.start(ctx.currentTime)
+      osc.stop(ctx.currentTime + decay)
+    })
+  },
+  /** Short descending chime — exercise end */
+  end() {
+    playTone(660, 0.12, 0.35)
+    setTimeout(() => playTone(550, 0.2, 0.3), 130)
   },
   /** One long lower tone — rest/stop signal */
   rest() {

@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { DeleteCollectionButton } from '@/components/collections/delete-collection-button'
 import { CollectionShareDialog } from '@/components/collections/collection-share-dialog'
 
-export const metadata = { title: 'Collections — Chronicon' }
+export const metadata = { title: 'Collections — Chronotimer' }
 
 export default async function CollectionsPage() {
   const supabase = await createClient()

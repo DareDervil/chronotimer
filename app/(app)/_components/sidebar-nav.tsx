@@ -14,6 +14,7 @@ import {
   LogOut,
   Plus,
   FolderOpen,
+  Info,
 } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
@@ -67,7 +68,7 @@ export function SidebarNav({ user, profile }: SidebarNavProps) {
             <span className="text-primary-foreground font-black text-sm">C</span>
           </div>
           <span className="ml-3 font-black text-base tracking-tight whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 delay-75">
-            Chronicon
+            Chronotimer
           </span>
         </div>
 
@@ -125,6 +126,17 @@ export function SidebarNav({ user, profile }: SidebarNavProps) {
             </span>
           </button>
 
+          {/* About */}
+          <Link
+            href="/about"
+            className="flex items-center gap-3 h-10 px-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
+          >
+            <Info className="h-[18px] w-[18px] shrink-0" />
+            <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 delay-75">
+              About
+            </span>
+          </Link>
+
           {/* Sign out */}
           <button
             onClick={handleSignOut}
@@ -137,7 +149,10 @@ export function SidebarNav({ user, profile }: SidebarNavProps) {
           </button>
 
           {/* User avatar */}
-          <div className="flex items-center gap-3 h-10 px-2.5 mt-1">
+          <Link
+            href="/profile"
+            className="flex items-center gap-3 h-10 px-2.5 mt-1 hover:bg-secondary/60 rounded-lg transition-colors cursor-pointer"
+          >
             <Avatar className="h-7 w-7 shrink-0">
               <AvatarImage src={profile?.avatar_url ?? undefined} />
               <AvatarFallback className="text-xs bg-primary/20 text-primary font-bold">
@@ -148,7 +163,7 @@ export function SidebarNav({ user, profile }: SidebarNavProps) {
               <p className="text-xs font-semibold truncate">{displayName}</p>
               <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
             </div>
-          </div>
+          </Link>
         </div>
       </aside>
 

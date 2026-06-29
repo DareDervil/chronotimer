@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { WorkoutBuilder } from '@/components/builder/workout-builder'
 import type { WorkoutWithStructure } from '@/types/database'
 
-export const metadata = { title: 'Edit Workout — Chronicon' }
+export const metadata = { title: 'Edit Workout — Chronotimer' }
 
 export default async function EditWorkoutPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params

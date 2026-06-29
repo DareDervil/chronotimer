@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { ExerciseLibrary } from '@/components/exercises/exercise-library'
 
-export const metadata = { title: 'Exercise Library — Chronicon' }
+export const metadata = { title: 'Exercise Library — Chronotimer' }
 
 export default async function ExercisesPage() {
   const supabase = await createClient()

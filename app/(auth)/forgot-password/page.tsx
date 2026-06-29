@@ -36,7 +36,7 @@ export default function ForgotPasswordPage() {
           <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center">
             <span className="text-primary-foreground font-bold text-xs">C</span>
           </div>
-          <span className="font-bold text-sm">Chronicon</span>
+          <span className="font-bold text-sm">Chronotimer</span>
         </div>
         <CardTitle className="text-xl">Forgot password</CardTitle>
         <CardDescription>

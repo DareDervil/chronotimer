@@ -10,7 +10,7 @@ import { CollectionShareDialog } from '@/components/collections/collection-share
 import { RemoveWorkoutButton } from '@/components/collections/remove-workout-button'
 import { AddWorkoutsForm } from '@/components/collections/add-workouts-form'
 
-export const metadata = { title: 'Collection — Chronicon' }
+export const metadata = { title: 'Collection — Chronotimer' }
 
 export default async function CollectionPage({
   params,

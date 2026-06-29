@@ -5,7 +5,7 @@ import { ActivityHeatmap } from '@/components/history/activity-heatmap'
 import { SessionCard } from '@/components/history/session-card'
 import { Clock, CheckCircle2, Dumbbell, Flame, Trophy } from 'lucide-react'
 
-export const metadata = { title: 'History — Chronicon' }
+export const metadata = { title: 'History — Chronotimer' }
 
 function toKey(d: Date): string {
   return d.toLocaleDateString('en-CA') // YYYY-MM-DD

@@ -61,7 +61,7 @@ export function AppNav({ user, profile }: AppNavProps) {
         {/* Logo */}
         <Link href="/dashboard" className="flex items-center gap-2 font-bold text-lg shrink-0 group">
           <Dumbbell className="h-5 w-5 text-primary transition-transform group-hover:scale-110" />
-          <span className="bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Chronicon</span>
+          <span className="bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Chronotimer</span>
         </Link>
 
         {/* Desktop nav */}
@@ -98,7 +98,7 @@ export function AppNav({ user, profile }: AppNavProps) {
             <SheetContent side="left" className="w-64">
               <div className="flex items-center gap-2 font-bold text-lg mb-6 mt-2">
                 <Dumbbell className="h-5 w-5 text-primary" />
-                Chronicon
+                Chronotimer
               </div>
               <nav className="flex flex-col gap-1">
                 {navLinks.map(({ href, label, icon: Icon }) => (

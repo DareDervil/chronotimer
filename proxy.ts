@@ -39,7 +39,7 @@ export async function proxy(request: NextRequest) {
     || pathname === '/forgot-password' || pathname === '/reset-password'
   const isPublicShare = pathname.startsWith('/w/') || pathname.startsWith('/c/')
   const isGuestBuilder = pathname.startsWith('/try')
-  const isProtected = !isAuthRoute && !isPublicShare && !isGuestBuilder && pathname !== '/'
+  const isProtected = !isAuthRoute && !isPublicShare && !isGuestBuilder && pathname !== '/' && pathname !== '/about'
 
   if (!user && isProtected) {
     const url = request.nextUrl.clone()

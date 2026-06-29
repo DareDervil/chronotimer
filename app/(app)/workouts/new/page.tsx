@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { WorkoutBuilder } from '@/components/builder/workout-builder'
 
-export const metadata = { title: 'New Workout — Chronicon' }
+export const metadata = { title: 'New Workout — Chronotimer' }
 
 export default async function NewWorkoutPage() {
   const supabase = await createClient()

@@ -2,8 +2,9 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { buttonVariants } from '@/components/ui/button'
+import { Footer } from '@/components/footer'
 
-export const metadata = { title: 'Chronicon — Fitness Timer' }
+export const metadata = { title: 'Chronotimer — Fitness Timer' }
 
 export default async function LandingPage() {
   const supabase = await createClient()
@@ -11,13 +12,14 @@ export default async function LandingPage() {
   if (user) redirect('/dashboard')
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-background px-4">
+    <div className="min-h-screen flex flex-col bg-background">
+    <main className="flex-1 flex flex-col items-center justify-center px-4">
       {/* Logo */}
       <div className="flex items-center gap-3 mb-12">
         <div className="h-12 w-12 rounded-2xl bg-primary flex items-center justify-center shadow-[0_0_40px_oklch(0.72_0.22_38_/_30%)]">
           <span className="text-primary-foreground font-black text-xl">C</span>
         </div>
-        <span className="font-black text-3xl tracking-tight">Chronicon</span>
+        <span className="font-black text-3xl tracking-tight">Chronotimer</span>
       </div>
 
       {/* Hero */}
@@ -59,5 +61,7 @@ export default async function LandingPage() {
         </Link>
       </p>
     </main>
+    <Footer />
+    </div>
   )
 }

@@ -9,7 +9,7 @@ import { DeleteWorkoutButton } from '@/components/workouts/delete-workout-button
 import { ShareDialog } from '@/components/builder/share-dialog'
 import { cn } from '@/lib/utils'
 
-export const metadata = { title: 'Workouts — Chronicon' }
+export const metadata = { title: 'Workouts — Chronotimer' }
 
 export default async function WorkoutsPage() {
   const supabase = await createClient()
