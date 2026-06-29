@@ -194,6 +194,22 @@ export function SidebarNav({ user, profile }: SidebarNavProps) {
           </div>
           <span className="text-[10px] font-medium">New</span>
         </Link>
+
+        <Link
+          href="/profile"
+          className={cn(
+            'flex flex-col items-center gap-1 px-1.5 py-1.5 rounded-xl transition-colors',
+            pathname === '/profile' ? 'text-primary' : 'text-muted-foreground'
+          )}
+        >
+          <Avatar className="h-5 w-5">
+            <AvatarImage src={profile?.avatar_url ?? undefined} />
+            <AvatarFallback className="text-[8px] bg-primary/20 text-primary font-bold">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          <span className="text-[10px] font-medium">Account</span>
+        </Link>
       </nav>
     </>
   )

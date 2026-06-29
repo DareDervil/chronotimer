@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { ChangeEmailForm } from './_components/change-email-form'
 import { ChangePasswordForm } from './_components/change-password-form'
 import { DeleteAccountSection } from './_components/delete-account-section'
+import { ProfileActions } from './_components/profile-actions'
 
 export const metadata = { title: 'Account — Chronotimer' }
 
@@ -26,6 +27,7 @@ export default async function ProfilePage() {
         <p className="text-sm text-muted-foreground mt-1">{user.email}</p>
       </div>
 
+      <ProfileActions />
       <ChangeEmailForm currentEmail={user.email!} />
       <ChangePasswordForm />
       <DeleteAccountSection />

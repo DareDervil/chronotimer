@@ -74,7 +74,7 @@ export default async function DashboardPage() {
       </section>
 
       {/* ── Workouts ──────────────────────────────────────────── */}
-      <section className="flex-1 px-6 md:px-10 py-8 max-w-6xl mx-auto">
+      <section className="px-6 md:px-10 py-8 max-w-6xl mx-auto">
         <div className="flex items-baseline justify-between mb-6">
           <h2 className="text-xs font-bold tracking-[0.2em] text-muted-foreground uppercase">
             Your Workouts
