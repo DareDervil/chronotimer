@@ -1,17 +1,17 @@
 # Chronotimer
 
-A fitness timer web app. Build workouts with a drag-and-drop interface and run them with a guided interval timer ??? no stopwatch required.
+A fitness timer web app. Build workouts with a drag-and-drop interface and run them with a guided interval timer — no stopwatch required.
 
 ## Features
 
-- **Workout builder** ??? drag-and-drop blocks (HIIT, Tabata, Circuit, AMRAP, EMOM, Straight Sets, Free-form) across Warm-Up / Main / Cool-Down phases
-- **Interval timer** ??? countdown ring, audio cues, pause/resume, back-step, and a 3-second countdown before each session
-- **Guest mode** ??? build and run a workout without an account; session is not saved
-- **Session history** ??? completed sessions logged with notes, duration, and an activity heatmap
-- **Exercise library** ??? ~300 seeded exercises with muscle heatmap, instructions, and YouTube links; create custom exercises too
-- **Sharing** ??? make any workout or collection public and share a link; recipients can run it as a guest or copy it to their own account
-- **Collections** ??? group workouts into named programs (useful for trainers sharing plans with students)
-- **Resume** ??? closing the tab mid-workout saves a snapshot; reopening prompts you to continue or start fresh
+- **Workout builder** — drag-and-drop blocks (HIIT, Tabata, Circuit, AMRAP, EMOM, Straight Sets, Free-form) across Warm-Up / Main / Cool-Down phases
+- **Interval timer** — countdown ring, audio cues, pause/resume, back-step, and a 3-second countdown before each session
+- **Guest mode** — build and run a workout without an account; session is not saved
+- **Session history** — completed sessions logged with notes, duration, and an activity heatmap
+- **Exercise library** — ~300 exercises seeded from [wger](https://wger.de), with muscle heatmap, instructions, and YouTube links; create custom exercises too
+- **Sharing** — make any workout or collection public and share a link; recipients can run it as a guest or copy it to their own account
+- **Collections** — group workouts into named programs (useful for trainers sharing plans with students)
+- **Resume** — closing the tab mid-workout saves a snapshot; reopening prompts you to continue or start fresh
 
 ## Stack
 
@@ -48,10 +48,14 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Deploying
 
-1. Create a [Supabase](https://supabase.com) project and run the migrations in `supabase/migrations/` against it in order (001 ??? 013) via the SQL Editor
-2. Get your project URL and anon key from **Project Settings ??? API**
-3. Deploy to [Vercel](https://vercel.com) ??? import the repo and set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` as environment variables
-4. In Supabase ??? **Authentication ??? URL Configuration**, set the Site URL and add a redirect URL pointing to your Vercel domain
+1. Create a [Supabase](https://supabase.com) project and run the migrations in `supabase/migrations/` against it in order (001 → 013) via the SQL Editor
+2. Get your project URL and anon key from **Project Settings → API**
+3. Deploy to [Vercel](https://vercel.com) — import the repo and set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` as environment variables
+4. In Supabase → **Authentication → URL Configuration**, set the Site URL and add a redirect URL pointing to your Vercel domain
+
+## Exercise data
+
+Exercise data is sourced from [wger Workout Manager](https://wger.de) and is used under the [Creative Commons Attribution Share Alike 3.0 (CC BY-SA 3.0)](https://creativecommons.org/licenses/by-sa/3.0/) licence.
 
 ## Disclaimer
 
