@@ -15,6 +15,7 @@ export default async function ExercisesPage() {
     .or(`is_custom.eq.false,and(is_custom.eq.true,created_by.eq.${user.id})`)
     .order('category')
     .order('name')
+    .limit(1000)
 
   return (
     <div className="px-6 md:px-10 py-8 max-w-6xl mx-auto space-y-6">

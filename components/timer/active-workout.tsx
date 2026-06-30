@@ -40,6 +40,7 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
 
   const [resumeSnap, setResumeSnap] = useState<TimerSnapshot | null>(null)
   const [exitOpen, setExitOpen] = useState(false)
+  const [announcement, setAnnouncement] = useState('')
 
   // On mount: load steps, then check for a resumable snapshot (guests always start fresh)
   useEffect(() => {
@@ -91,6 +92,23 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
     prevCountdown.current = countdown
     if (countdown > 0) beep.tick()
   }, [countdown])
+
+  // ARIA live announcements for screen readers
+  const prevStepForAria = useRef<number | null>(null)
+  useEffect(() => {
+    if (prevStepForAria.current === null) { prevStepForAria.current = stepIndex; return }
+    if (prevStepForAria.current === stepIndex) return
+    prevStepForAria.current = stepIndex
+    const step = steps[stepIndex]
+    if (!step) return
+    const msg = step.isRest ? `Rest. ${step.label}` : `${step.exerciseName}. ${step.label}`
+    setAnnouncement(msg)
+  }, [stepIndex, steps])
+
+  useEffect(() => {
+    if (countdown > 0) setAnnouncement(`Starting in ${countdown}`)
+    else if (countdown === 0 && status === 'running') setAnnouncement('Go!')
+  }, [countdown, status])
 
   // Keyboard shortcuts (desktop)
   useEffect(() => {
@@ -237,6 +255,7 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
 
   return (
     <div className="flex flex-col min-h-screen">
+      <span aria-live="assertive" aria-atomic="true" className="sr-only">{announcement}</span>
       {/* Top bar */}
       <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-background/95 backdrop-blur border-b border-border">
         <button

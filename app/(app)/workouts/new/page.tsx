@@ -11,6 +11,7 @@ export default async function NewWorkoutPage() {
     .select('*')
     .order('category')
     .order('name')
+    .limit(1000)
 
   return <WorkoutBuilder exercises={exercises ?? []} />
 }

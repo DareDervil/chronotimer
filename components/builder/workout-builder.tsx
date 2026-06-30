@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useTransition } from 'react'
+import { useState, useCallback, useTransition, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   DndContext,
@@ -90,18 +90,61 @@ function initPhases(workout?: WorkoutWithStructure): BuilderPhase[] {
   })
 }
 
+// Convert builder state → WorkoutWithStructure shape for the timer (guest mode)
+function buildWorkoutPayload(workout: BuilderWorkout): WorkoutWithStructure {
+  const now = new Date().toISOString()
+  const fakeId = uid()
+  return {
+    id: fakeId,
+    user_id: 'guest',
+    name: workout.name || 'My Workout',
+    description: workout.description || null,
+    is_public: false,
+    share_slug: null,
+    created_at: now,
+    updated_at: now,
+    phases: workout.phases
+      .filter((p) => p.blocks.length > 0)
+      .map((p, pi) => ({
+        id: p.id,
+        workout_id: fakeId,
+        phase_type: p.phase_type,
+        order_index: pi,
+        blocks: p.blocks.map((b, bi) => ({
+          id: b.id,
+          phase_id: p.id,
+          block_type: b.block_type,
+          config: b.config,
+          order_index: bi,
+          exercises: b.exercises.map((e, ei) => ({
+            id: e.id,
+            block_id: b.id,
+            exercise_id: e.exercise_id,
+            duration_s: e.duration_s,
+            reps: e.reps,
+            sets: e.sets,
+            rest_after_s: e.rest_after_s,
+            order_index: ei,
+            exercise: e.exercise,
+          })),
+        })),
+      })),
+  }
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 interface WorkoutBuilderProps {
   exercises: Exercise[]
   initialWorkout?: WorkoutWithStructure
+  guestMode?: boolean
 }
 
 type ActiveDragItem =
   | { type: 'sidebar'; exercise: Exercise }
   | { type: 'bex'; bex: BuilderBlockExercise }
 
-export function WorkoutBuilder({ exercises, initialWorkout }: WorkoutBuilderProps) {
+export function WorkoutBuilder({ exercises, initialWorkout, guestMode = false }: WorkoutBuilderProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -110,6 +153,7 @@ export function WorkoutBuilder({ exercises, initialWorkout }: WorkoutBuilderProp
     description: initialWorkout?.description ?? '',
     phases: initPhases(initialWorkout),
   })
+  const [isDirty, setIsDirty] = useState(false)
   const [activeItem, setActiveItem] = useState<ActiveDragItem | null>(null)
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false)
   const [mobileAddTarget, setMobileAddTarget] = useState<string | null>(null)
@@ -118,6 +162,35 @@ export function WorkoutBuilder({ exercises, initialWorkout }: WorkoutBuilderProp
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } })
   )
+
+  // Unsaved changes guard (auth only)
+  useEffect(() => {
+    if (guestMode || !isDirty) return
+    function onBeforeUnload(e: BeforeUnloadEvent) {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => window.removeEventListener('beforeunload', onBeforeUnload)
+  }, [isDirty, guestMode])
+
+  // Cmd+S shortcut (auth only) — ref keeps listener stable across renders
+  const handleSaveRef = useRef<() => void>(() => {})
+  useEffect(() => {
+    handleSaveRef.current = () => handleSave(false)
+  })
+  useEffect(() => {
+    if (guestMode) return
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault()
+        handleSaveRef.current()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [guestMode])
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -138,6 +211,7 @@ export function WorkoutBuilder({ exercises, initialWorkout }: WorkoutBuilderProp
   }
 
   function updatePhases(updater: (phases: BuilderPhase[]) => BuilderPhase[]) {
+    setIsDirty(true)
     setWorkout((w) => ({ ...w, phases: updater(w.phases) }))
   }
 
@@ -319,7 +393,7 @@ export function WorkoutBuilder({ exercises, initialWorkout }: WorkoutBuilderProp
     }
   }
 
-  // ── Save / Delete ────────────────────────────────────────────────────────────
+  // ── Save / Delete (auth) ─────────────────────────────────────────────────────
 
   function handleSave(andStart = false) {
     if (!workout.name.trim()) {
@@ -331,10 +405,12 @@ export function WorkoutBuilder({ exercises, initialWorkout }: WorkoutBuilderProp
       try {
         if (initialWorkout) {
           await updateWorkout(initialWorkout.id, input)
+          setIsDirty(false)
           toast.success('Workout saved')
           router.push(andStart ? `/workouts/${initialWorkout.id}/run` : '/workouts')
         } else {
           const { id } = await createWorkout(input)
+          setIsDirty(false)
           toast.success('Workout saved')
           router.push(andStart ? `/workouts/${id}/run` : '/workouts')
         }
@@ -342,17 +418,6 @@ export function WorkoutBuilder({ exercises, initialWorkout }: WorkoutBuilderProp
         toast.error('Failed to save workout')
       }
     })
-  }
-
-  function handleMobileAdd(blockId: string) {
-    setMobileAddTarget(blockId)
-    setMobileSheetOpen(true)
-  }
-
-  function handleMobileTapAdd(exercise: Exercise) {
-    if (!mobileAddTarget) return
-    addExerciseToBlock(mobileAddTarget, exercise)
-    setMobileSheetOpen(false)
   }
 
   function handleDelete() {
@@ -367,45 +432,81 @@ export function WorkoutBuilder({ exercises, initialWorkout }: WorkoutBuilderProp
     })
   }
 
+  // ── Run (guest) ───────────────────────────────────────────────────────────────
+
+  function handleRun() {
+    const hasBlocks = workout.phases.some((p) => p.blocks.length > 0)
+    if (!hasBlocks) return
+    const payload = buildWorkoutPayload(workout)
+    try {
+      sessionStorage.setItem('chronicon:guest-workout', JSON.stringify(payload))
+    } catch { /* storage unavailable */ }
+    router.push('/try/run')
+  }
+
+  // ── Mobile exercise picker ────────────────────────────────────────────────────
+
+  function handleMobileAdd(blockId: string) {
+    setMobileAddTarget(blockId)
+    setMobileSheetOpen(true)
+  }
+
+  function handleMobileTapAdd(exercise: Exercise) {
+    if (!mobileAddTarget) return
+    addExerciseToBlock(mobileAddTarget, exercise)
+    setMobileSheetOpen(false)
+  }
+
+  const hasBlocks = workout.phases.some((p) => p.blocks.length > 0)
+
   // ── Render ───────────────────────────────────────────────────────────────────
 
   return (<>
     <DndContext id="workout-builder" sensors={sensors} collisionDetection={closestCenter} onDragStart={onDragStart} onDragEnd={onDragEnd}>
-      <div className="flex flex-col h-[calc(100vh-4rem)] md:h-screen">
+      <div className={cn('flex flex-col', guestMode ? 'h-screen' : 'h-[calc(100vh-4rem)] md:h-screen')}>
         {/* Header */}
         <div className="flex items-center gap-3 border-b px-4 py-3 shrink-0">
           <Input
             value={workout.name}
-            onChange={(e) => setWorkout((w) => ({ ...w, name: e.target.value }))}
+            onChange={(e) => { setIsDirty(true); setWorkout((w) => ({ ...w, name: e.target.value })) }}
             placeholder="Workout name…"
             className="text-base font-medium border-0 shadow-none px-0 h-auto focus-visible:ring-0 bg-transparent flex-1"
           />
-          {initialWorkout && (
-            <ShareDialog
-              workoutId={initialWorkout.id}
-              initialIsPublic={initialWorkout.is_public}
-              initialSlug={initialWorkout.share_slug}
-            />
-          )}
-          {initialWorkout && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleDelete}
-              disabled={isPending}
-              className="text-muted-foreground hover:text-destructive shrink-0"
-            >
-              <Trash2 className="h-4 w-4" />
+          {guestMode ? (
+            <Button onClick={handleRun} disabled={!hasBlocks} size="sm" className="shrink-0">
+              <Play className="h-4 w-4 mr-1.5" />
+              Run Workout
             </Button>
+          ) : (
+            <>
+              {initialWorkout && (
+                <ShareDialog
+                  workoutId={initialWorkout.id}
+                  initialIsPublic={initialWorkout.is_public}
+                  initialSlug={initialWorkout.share_slug}
+                />
+              )}
+              {initialWorkout && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDelete}
+                  disabled={isPending}
+                  className="text-muted-foreground hover:text-destructive shrink-0"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+              <Button onClick={() => handleSave(false)} disabled={isPending} size="sm" variant="outline" className="shrink-0">
+                <Save className="h-4 w-4 mr-1.5" />
+                {isPending ? 'Saving…' : 'Save'}
+              </Button>
+              <Button onClick={() => handleSave(true)} disabled={isPending} size="sm" className="shrink-0">
+                <Play className="h-4 w-4 mr-1.5" />
+                Save & Start
+              </Button>
+            </>
           )}
-          <Button onClick={() => handleSave(false)} disabled={isPending} size="sm" variant="outline" className="shrink-0">
-            <Save className="h-4 w-4 mr-1.5" />
-            {isPending ? 'Saving…' : 'Save'}
-          </Button>
-          <Button onClick={() => handleSave(true)} disabled={isPending} size="sm" className="shrink-0">
-            <Play className="h-4 w-4 mr-1.5" />
-            Save & Start
-          </Button>
         </div>
 
         {/* Body: sidebar + canvas */}
@@ -423,7 +524,7 @@ export function WorkoutBuilder({ exercises, initialWorkout }: WorkoutBuilderProp
               <div className="mb-6 max-w-3xl mx-auto">
                 <Input
                   value={workout.description}
-                  onChange={(e) => setWorkout((w) => ({ ...w, description: e.target.value }))}
+                  onChange={(e) => { setIsDirty(true); setWorkout((w) => ({ ...w, description: e.target.value })) }}
                   placeholder="Description (optional)"
                   className="text-sm text-muted-foreground border-0 shadow-none px-0 h-auto focus-visible:ring-0 bg-transparent"
                 />

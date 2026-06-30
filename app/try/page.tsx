@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { GuestWorkoutBuilder } from '@/components/builder/guest-workout-builder'
+import { WorkoutBuilder } from '@/components/builder/workout-builder'
 
 export const metadata = { title: 'Try Chronotimer — Build a Workout' }
 
@@ -13,6 +13,7 @@ export default async function TryPage() {
     .eq('is_custom', false)
     .order('category')
     .order('name')
+    .limit(1000)
 
-  return <GuestWorkoutBuilder exercises={exercises ?? []} />
+  return <WorkoutBuilder exercises={exercises ?? []} guestMode />
 }

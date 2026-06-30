@@ -31,7 +31,8 @@ export default async function EditWorkoutPage({ params }: { params: Promise<{ id
       .from('exercises')
       .select('*')
       .order('category')
-      .order('name'),
+      .order('name')
+      .limit(1000),
   ])
 
   if (!workout) notFound()

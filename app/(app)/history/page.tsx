@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
 import { ActivityHeatmap } from '@/components/history/activity-heatmap'
-import { SessionCard } from '@/components/history/session-card'
+import { SessionList } from '@/components/history/session-list'
 import { Clock, CheckCircle2, Dumbbell, Flame, Trophy } from 'lucide-react'
 
 export const metadata = { title: 'History — Chronotimer' }
@@ -160,21 +160,17 @@ export default async function HistoryPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-2">
-            {sessions.map((session) => (
-              <SessionCard
-                key={session.id}
-                session={{
-                  id: session.id,
-                  started_at: session.started_at,
-                  completed_at: session.completed_at,
-                  notes: session.notes,
-                  workout_name: (session as { workout_name?: string | null }).workout_name ?? null,
-                  workout: (session.workout as { name: string } | null),
-                }}
-              />
-            ))}
-          </div>
+          <SessionList
+            initialSessions={sessions.map((s) => ({
+              id: s.id,
+              started_at: s.started_at,
+              completed_at: s.completed_at,
+              notes: s.notes,
+              workout_name: (s as { workout_name?: string | null }).workout_name ?? null,
+              workout: (s.workout as { name: string } | null),
+            }))}
+            hasMore={sessions.length === 50}
+          />
         )}
       </section>
     </div>

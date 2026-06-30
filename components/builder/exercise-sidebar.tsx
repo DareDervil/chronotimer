@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { useDraggable } from '@dnd-kit/core'
 import { Search, GripVertical, Plus } from 'lucide-react'
 import type { Exercise, ExerciseCategory } from '@/types/database'
@@ -41,6 +42,7 @@ export function ExerciseSidebar({ exercises, onTapAdd }: ExerciseSidebarProps) {
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState<SidebarTab>('warmup')
   const [equipFilter, setEquipFilter] = useState<string | null>(null)
+  const listRef = useRef<HTMLDivElement>(null)
 
   const customExercises = useMemo(() => exercises.filter((ex) => ex.is_custom), [exercises])
 
@@ -91,6 +93,13 @@ export function ExerciseSidebar({ exercises, onTapAdd }: ExerciseSidebarProps) {
       return true
     })
   }, [exercises, search, activeCategory, equipFilter, customExercises])
+
+  const rowVirtualizer = useVirtualizer({
+    count: filtered.length,
+    getScrollElement: () => listRef.current,
+    estimateSize: () => 44,
+    overscan: 8,
+  })
 
   return (
     <div className="flex flex-col h-full">
@@ -179,14 +188,38 @@ export function ExerciseSidebar({ exercises, onTapAdd }: ExerciseSidebarProps) {
 
       <div className="h-px bg-border mx-3 shrink-0" />
 
-      {/* Exercise list */}
-      <div className="flex-1 min-h-0 overflow-y-auto touch-pan-y p-2 space-y-1" style={{ WebkitOverflowScrolling: 'touch' }}>
+      {/* Exercise list — virtualized */}
+      <div
+        ref={listRef}
+        className="flex-1 min-h-0 overflow-y-auto touch-pan-y p-2"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         {filtered.length === 0 ? (
           <p className="text-xs text-muted-foreground text-center py-6">No exercises found</p>
         ) : (
-          filtered.map((exercise) => (
-            <DraggableExercise key={exercise.id} exercise={exercise} onTapAdd={onTapAdd} />
-          ))
+          <div
+            style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: 'relative' }}
+          >
+            {rowVirtualizer.getVirtualItems().map((virtualItem) => (
+              <div
+                key={virtualItem.key}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: `${virtualItem.size}px`,
+                  transform: `translateY(${virtualItem.start}px)`,
+                  paddingBottom: '4px',
+                }}
+              >
+                <DraggableExercise
+                  exercise={filtered[virtualItem.index]}
+                  onTapAdd={onTapAdd}
+                />
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>
@@ -208,7 +241,7 @@ function DraggableExercise({ exercise, onTapAdd }: { exercise: Exercise; onTapAd
     <div
       ref={setNodeRef}
       className={cn(
-        'flex items-center gap-1.5 rounded-md border bg-card px-2 py-1.5 text-sm cursor-default',
+        'flex items-center gap-1.5 rounded-md border bg-card px-2 py-1.5 text-sm cursor-default h-full',
         isDragging && 'opacity-40'
       )}
     >

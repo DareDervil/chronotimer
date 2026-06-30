@@ -47,6 +47,22 @@ export async function deleteSession(sessionId: string): Promise<void> {
   if (error) throw error
 }
 
+export async function getMoreSessions(offset: number) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+
+  const { data, error } = await supabase
+    .from('workout_sessions')
+    .select('*, workout:workout_id(id, name)')
+    .eq('user_id', user.id)
+    .order('started_at', { ascending: false })
+    .range(offset, offset + 49)
+
+  if (error) throw error
+  return data ?? []
+}
+
 export async function saveSession(
   workoutId: string,
   workoutName: string,

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useState } from 'react'
 import { useTheme } from 'next-themes'
 import {
   LayoutDashboard,
@@ -50,7 +50,7 @@ export function SidebarNav({ user, profile }: SidebarNavProps) {
   const [pinned, setPinned] = useState(false)
 
   useEffect(() => setMounted(true), [])
-  useEffect(() => {
+  useLayoutEffect(() => {
     const stored = localStorage.getItem('sidebar-pinned')
     if (stored === 'true') setPinned(true)
   }, [])

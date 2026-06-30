@@ -4,15 +4,19 @@ import { SidebarNav } from './_components/sidebar-nav'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+
+  // getSession reads the JWT from the cookie (no network) — use the user ID
+  // to start the profile fetch in parallel with the authoritative getUser() check
+  const { data: { session } } = await supabase.auth.getSession()
+
+  const [{ data: { user } }, { data: profile }] = await Promise.all([
+    supabase.auth.getUser(),
+    session?.user?.id
+      ? supabase.from('profiles').select('display_name, avatar_url').eq('id', session.user.id).single()
+      : Promise.resolve({ data: null, error: null }),
+  ])
 
   if (!user) redirect('/login')
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('display_name, avatar_url')
-    .eq('id', user.id)
-    .single()
 
   return (
     <div className="min-h-screen">

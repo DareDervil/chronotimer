@@ -21,6 +21,7 @@ export default async function WorkoutsPage() {
     .select('id, name, description, is_public, share_slug, updated_at')
     .eq('user_id', user!.id)
     .order('updated_at', { ascending: false })
+    .limit(200)
 
   return (
     <div className="px-6 md:px-10 py-8 max-w-6xl mx-auto space-y-6">
