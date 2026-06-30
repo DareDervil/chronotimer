@@ -454,7 +454,7 @@ export function WorkoutBuilder({ exercises, initialWorkout }: WorkoutBuilderProp
 
       {/* Mobile exercise picker sheet */}
       <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
-        <SheetContent side="bottom" className="!h-[75vh] p-0 gap-0">
+        <SheetContent side="bottom" className="p-0 gap-0" style={{ height: '75vh' }}>
           <SheetHeader className="px-4 pt-4 pb-2 border-b shrink-0">
             <SheetTitle>Add exercise</SheetTitle>
           </SheetHeader>

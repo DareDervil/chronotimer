@@ -95,7 +95,7 @@ export function ExerciseSidebar({ exercises, onTapAdd }: ExerciseSidebarProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Search */}
-      <div className="relative p-3 pb-2">
+      <div className="relative p-3 pb-2 shrink-0">
         <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
         <Input
           placeholder="Search..."
@@ -108,7 +108,7 @@ export function ExerciseSidebar({ exercises, onTapAdd }: ExerciseSidebarProps) {
       {/* Category tabs */}
       {!search && (
         <>
-          <div className="flex flex-col gap-0.5 px-2 pb-2">
+          <div className="flex flex-col gap-0.5 px-2 pb-2 shrink-0">
             {CATEGORIES.filter((c) => availableCategories[c]).map((cat) => (
               <button
                 key={cat}
@@ -144,7 +144,7 @@ export function ExerciseSidebar({ exercises, onTapAdd }: ExerciseSidebarProps) {
 
           {/* Equipment filter */}
           {allEquipment.length > 0 && (
-            <div className="px-2 pb-2 flex flex-wrap gap-1">
+            <div className="px-2 pb-2 flex flex-wrap gap-1 shrink-0">
               <button
                 type="button"
                 onClick={() => setEquipFilter(null)}
@@ -177,10 +177,10 @@ export function ExerciseSidebar({ exercises, onTapAdd }: ExerciseSidebarProps) {
         </>
       )}
 
-      <div className="h-px bg-border mx-3" />
+      <div className="h-px bg-border mx-3 shrink-0" />
 
       {/* Exercise list */}
-      <div className="flex-1 overflow-y-auto touch-pan-y p-2 space-y-1">
+      <div className="flex-1 min-h-0 overflow-y-auto touch-pan-y p-2 space-y-1" style={{ WebkitOverflowScrolling: 'touch' }}>
         {filtered.length === 0 ? (
           <p className="text-xs text-muted-foreground text-center py-6">No exercises found</p>
         ) : (

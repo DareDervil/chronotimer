@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  /* Simulating the two conflicting Tailwind rules */
+  
+  /* data-[side=bottom]:h-auto from base classes */
+  [data-side="bottom"] {
+    height: auto;
+  }
+  
+  /* !h-[75vh] with !important from override */
+  .sheet-test {
+    height: 75vh !important;
+  }
+</style>
+</head>
+<body>
+  <div data-side="bottom" class="sheet-test">
+    <p>This div should be 75vh tall (important wins)</p>
+  </div>
+  
+  <script>
+    const div = document.querySelector('[data-side="bottom"]');
+    const computed = window.getComputedStyle(div);
+    console.log("Computed height:", computed.height);
+    console.log("CSS indicates: !important should win, so height should be calculated from 75vh");
+  </script>
+</body>
+</html>
