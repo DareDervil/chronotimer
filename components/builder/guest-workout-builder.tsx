@@ -350,7 +350,7 @@ export function GuestWorkoutBuilder({ exercises }: GuestWorkoutBuilderProps) {
           </aside>
 
           <div className="flex flex-col flex-1 overflow-hidden">
-            <main className="flex-1 overflow-y-auto p-6">
+            <main className="flex-1 overflow-y-auto p-6 md:pb-6" style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}>
               <div className="mb-6 max-w-3xl mx-auto">
                 <Input
                   value={workout.description}

@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { ExerciseDetailSheet } from './exercise-detail-sheet'
 import { CreateExerciseDialog } from './create-exercise-dialog'
 import { deleteCustomExercise } from '@/lib/actions/exercises'
@@ -46,6 +48,7 @@ export function ExerciseLibrary({ exercises, userId }: ExerciseLibraryProps) {
   const [equipFilter, setEquipFilter] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<ExerciseCategory | 'custom' | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
+  const [exerciseToDelete, setExerciseToDelete] = useState<Exercise | null>(null)
 
   const customExercises = useMemo(
     () => exercises.filter((ex) => ex.is_custom && ex.created_by === userId),
@@ -107,14 +110,16 @@ export function ExerciseLibrary({ exercises, userId }: ExerciseLibraryProps) {
     ? activeTab
     : categories[0]) ?? 'strength'
 
-  async function handleDelete(exercise: Exercise) {
-    if (!confirm(`Delete "${exercise.name}"?`)) return
+  async function confirmDelete() {
+    if (!exerciseToDelete) return
     try {
-      await deleteCustomExercise(exercise.id)
-      if (selected?.id === exercise.id) setSelected(null)
+      await deleteCustomExercise(exerciseToDelete.id)
+      if (selected?.id === exerciseToDelete.id) setSelected(null)
       toast.success('Exercise deleted')
     } catch {
       toast.error('Failed to delete exercise')
+    } finally {
+      setExerciseToDelete(null)
     }
   }
 
@@ -149,7 +154,7 @@ export function ExerciseLibrary({ exercises, userId }: ExerciseLibraryProps) {
               type="button"
               onClick={() => setEquipFilter(null)}
               className={cn(
-                'text-xs px-3 py-1 rounded-full border transition-colors',
+                'text-xs px-3 py-1 rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 !equipFilter
                   ? 'bg-foreground text-background border-foreground'
                   : 'border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground'
@@ -163,7 +168,7 @@ export function ExerciseLibrary({ exercises, userId }: ExerciseLibraryProps) {
                 type="button"
                 onClick={() => setEquipFilter(equipFilter === eq ? null : eq)}
                 className={cn(
-                  'text-xs px-3 py-1 rounded-full border transition-colors',
+                  'text-xs px-3 py-1 rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   equipFilter === eq
                     ? 'bg-foreground text-background border-foreground'
                     : 'border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground'
@@ -218,7 +223,7 @@ export function ExerciseLibrary({ exercises, userId }: ExerciseLibraryProps) {
                     key={exercise.id}
                     exercise={exercise}
                     onClick={() => setSelected(exercise)}
-                    onDelete={() => handleDelete(exercise)}
+                    onDelete={() => setExerciseToDelete(exercise)}
                   />
                 ))}
               </div>
@@ -229,6 +234,21 @@ export function ExerciseLibrary({ exercises, userId }: ExerciseLibraryProps) {
 
       <ExerciseDetailSheet exercise={selected} onClose={() => setSelected(null)} />
       <CreateExerciseDialog open={createOpen} onOpenChange={setCreateOpen} />
+
+      <Dialog open={!!exerciseToDelete} onOpenChange={(o) => { if (!o) setExerciseToDelete(null) }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Delete exercise?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            &quot;{exerciseToDelete?.name}&quot; will be permanently deleted.
+          </p>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setExerciseToDelete(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={confirmDelete}>Delete</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }
@@ -250,7 +270,9 @@ export function ExerciseCard({
   return (
     <Card
       onClick={onClick}
-      className={cn(onClick && 'cursor-pointer hover:border-foreground/30 transition-colors', 'relative')}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } } : undefined}
+      className={cn(onClick && 'cursor-pointer hover:border-foreground/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', 'relative')}
     >
       {onDelete && (
         <button

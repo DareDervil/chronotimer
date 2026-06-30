@@ -74,7 +74,7 @@ function LoginForm() {
         <CardContent className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" autoComplete="email" placeholder="you@example.com" {...register('email')} />
+            <Input id="email" type="email" inputMode="email" autoComplete="email" placeholder="you@example.com" {...register('email')} />
             {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
           </div>
           <div className="space-y-1.5">
@@ -154,7 +154,7 @@ function RegisterForm() {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" autoComplete="email" placeholder="you@example.com" {...register('email')} />
+            <Input id="email" type="email" inputMode="email" autoComplete="email" placeholder="you@example.com" {...register('email')} />
             {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
           </div>
           <div className="space-y-1.5">

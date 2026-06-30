@@ -90,9 +90,12 @@ export function WorkoutComplete({
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
+              onFocus={(e) => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' })}
               placeholder="Add a note… (optional)"
               rows={3}
-              className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm resize-none placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              enterKeyHint="done"
+              style={{ fontSize: '16px' }}
+              className="w-full rounded-lg border border-border bg-background px-4 py-3 resize-none placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
             <button
               onClick={handleSave}

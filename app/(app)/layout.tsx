@@ -19,7 +19,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <SidebarNav user={user} profile={profile} />
 
       {/* Content offset for sidebar on desktop, bottom bar on mobile */}
-      <main className="relative z-10 md:ml-[60px] pb-16 md:pb-0 min-h-screen">
+      <main className="relative z-10 md:ml-[60px] md:!pb-0 min-h-screen" style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom))' }}>
         {children}
       </main>
     </div>

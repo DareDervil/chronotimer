@@ -15,6 +15,8 @@ import {
   Plus,
   FolderOpen,
   Info,
+  Pin,
+  PinOff,
 } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
@@ -45,7 +47,24 @@ export function SidebarNav({ user, profile }: SidebarNavProps) {
   const { theme, setTheme } = useTheme()
 
   const [mounted, setMounted] = useState(false)
+  const [pinned, setPinned] = useState(false)
+
   useEffect(() => setMounted(true), [])
+  useEffect(() => {
+    const stored = localStorage.getItem('sidebar-pinned')
+    if (stored === 'true') setPinned(true)
+  }, [])
+
+  function togglePin() {
+    const next = !pinned
+    setPinned(next)
+    localStorage.setItem('sidebar-pinned', next ? 'true' : 'false')
+  }
+
+  // Class applied to all label spans — visible when pinned, fade-in on hover otherwise
+  const labelClass = pinned
+    ? 'opacity-100 transition-opacity duration-200'
+    : 'opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 delay-75'
 
   const displayName = profile?.display_name ?? user.email?.split('@')[0] ?? 'User'
   const initials = displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
@@ -60,14 +79,17 @@ export function SidebarNav({ user, profile }: SidebarNavProps) {
   return (
     <>
       {/* ── Desktop sidebar ─────────────────────────────────── */}
-      <aside className="group/sidebar hidden md:flex flex-col fixed left-0 top-0 h-full z-50 w-[60px] hover:w-[220px] transition-all duration-300 ease-in-out border-r border-border/50 bg-background/80 backdrop-blur-xl overflow-hidden">
+      <aside className={cn(
+        'group/sidebar hidden md:flex flex-col fixed left-0 top-0 h-full z-50 transition-all duration-300 ease-in-out border-r border-border/50 bg-background/80 backdrop-blur-xl overflow-hidden',
+        pinned ? 'w-[220px]' : 'w-[60px] hover:w-[220px]'
+      )}>
 
         {/* Logo */}
         <div className="flex items-center h-16 px-4 border-b border-border/50 shrink-0">
           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
             <span className="text-primary-foreground font-black text-sm">C</span>
           </div>
-          <span className="ml-3 font-black text-base tracking-tight whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 delay-75">
+          <span className={cn('ml-3 font-black text-base tracking-tight whitespace-nowrap', labelClass)}>
             Chronotimer
           </span>
         </div>
@@ -79,7 +101,7 @@ export function SidebarNav({ user, profile }: SidebarNavProps) {
             className="flex items-center gap-3 h-9 px-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
           >
             <Plus className="h-4 w-4 shrink-0" />
-            <span className="text-sm font-semibold whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 delay-75">
+            <span className={cn('text-sm font-semibold whitespace-nowrap', labelClass)}>
               New Workout
             </span>
           </Link>
@@ -101,11 +123,11 @@ export function SidebarNav({ user, profile }: SidebarNavProps) {
                 )}
               >
                 <Icon className={cn('h-[18px] w-[18px] shrink-0', active && 'text-primary')} />
-                <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 delay-75">
+                <span className={labelClass}>
                   {label}
                 </span>
                 {active && (
-                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary shrink-0 opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 delay-75" />
+                  <span className={cn('ml-auto h-1.5 w-1.5 rounded-full bg-primary shrink-0', labelClass)} />
                 )}
               </Link>
             )
@@ -121,8 +143,23 @@ export function SidebarNav({ user, profile }: SidebarNavProps) {
           >
             <Sun className="h-[18px] w-[18px] shrink-0 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 absolute" />
             <Moon className="h-[18px] w-[18px] shrink-0 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 delay-75 ml-7">
+            <span className={cn(labelClass, 'ml-7')}>
               {mounted ? (theme === 'dark' ? 'Light mode' : 'Dark mode') : 'Theme'}
+            </span>
+          </button>
+
+          {/* Pin sidebar */}
+          <button
+            onClick={togglePin}
+            className="flex items-center gap-3 h-10 px-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors w-full"
+            title={pinned ? 'Unpin sidebar' : 'Pin sidebar'}
+          >
+            {pinned
+              ? <PinOff className="h-[18px] w-[18px] shrink-0 text-primary" />
+              : <Pin className="h-[18px] w-[18px] shrink-0" />
+            }
+            <span className={labelClass}>
+              {pinned ? 'Unpin sidebar' : 'Pin sidebar'}
             </span>
           </button>
 
@@ -132,7 +169,7 @@ export function SidebarNav({ user, profile }: SidebarNavProps) {
             className="flex items-center gap-3 h-10 px-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
           >
             <Info className="h-[18px] w-[18px] shrink-0" />
-            <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 delay-75">
+            <span className={labelClass}>
               About
             </span>
           </Link>
@@ -143,7 +180,7 @@ export function SidebarNav({ user, profile }: SidebarNavProps) {
             className="flex items-center gap-3 h-10 px-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors w-full"
           >
             <LogOut className="h-[18px] w-[18px] shrink-0" />
-            <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 delay-75">
+            <span className={labelClass}>
               Sign out
             </span>
           </button>
@@ -159,7 +196,7 @@ export function SidebarNav({ user, profile }: SidebarNavProps) {
                 {initials}
               </AvatarFallback>
             </Avatar>
-            <div className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 delay-75 min-w-0">
+            <div className={cn(labelClass, 'min-w-0')}>
               <p className="text-xs font-semibold truncate">{displayName}</p>
               <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
             </div>
@@ -168,7 +205,7 @@ export function SidebarNav({ user, profile }: SidebarNavProps) {
       </aside>
 
       {/* ── Mobile bottom bar ───────────────────────────────── */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 h-16 border-t border-border/50 bg-background/90 backdrop-blur-xl flex items-center justify-around px-1">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-border/50 bg-background/90 backdrop-blur-xl flex items-center justify-around px-1" style={{ height: 'calc(4rem + env(safe-area-inset-bottom))', paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {navLinks.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(href + '/')
           return (

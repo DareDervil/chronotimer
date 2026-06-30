@@ -418,7 +418,7 @@ export function WorkoutBuilder({ exercises, initialWorkout }: WorkoutBuilderProp
           {/* Right column: canvas + timeline */}
           <div className="flex flex-col flex-1 overflow-hidden">
             {/* Workout canvas */}
-            <main className="flex-1 overflow-y-auto p-6">
+            <main className="flex-1 overflow-y-auto p-6 md:pb-6" style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}>
               {/* Optional description */}
               <div className="mb-6 max-w-3xl mx-auto">
                 <Input

@@ -182,7 +182,8 @@ export function CreateExerciseDialog({ open, onOpenChange }: CreateExerciseDialo
               placeholder="Describe the movement, form cues, common mistakes..."
               rows={4}
               required
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
+              style={{ fontSize: '16px' }}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
             />
           </div>
 

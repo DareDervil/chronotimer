@@ -246,8 +246,10 @@ export function SessionCard({ session }: SessionCardProps) {
   return (
     <>
       <Card
-        className="cursor-pointer hover:border-foreground/30 transition-colors"
+        className="cursor-pointer hover:border-foreground/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         onClick={() => setOpen(true)}
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(true) } }}
       >
         <CardContent className="flex items-center justify-between py-3 px-4">
           <div className="min-w-0">

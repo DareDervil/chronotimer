@@ -21,16 +21,22 @@ export default async function ProfilePage() {
   const displayName = profile?.display_name ?? user.email?.split('@')[0] ?? 'User'
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-8 space-y-8">
-      <div>
+    <div className="max-w-3xl mx-auto px-4 py-8">
+      <div className="mb-8">
         <h1 className="text-2xl font-bold tracking-tight">Account</h1>
         <p className="text-sm text-muted-foreground mt-1">{user.email}</p>
       </div>
 
-      <ProfileActions />
-      <ChangeEmailForm currentEmail={user.email!} />
-      <ChangePasswordForm />
-      <DeleteAccountSection />
+      <div className="grid md:grid-cols-2 gap-8 items-start">
+        <div className="space-y-8">
+          <ProfileActions />
+          <ChangeEmailForm currentEmail={user.email!} />
+          <ChangePasswordForm />
+        </div>
+        <div>
+          <DeleteAccountSection />
+        </div>
+      </div>
     </div>
   )
 }

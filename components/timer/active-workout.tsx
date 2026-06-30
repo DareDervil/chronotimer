@@ -92,6 +92,44 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
     if (countdown > 0) beep.tick()
   }, [countdown])
 
+  // Keyboard shortcuts (desktop)
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      switch (e.key) {
+        case ' ':
+          e.preventDefault()
+          if (status === 'running') pause()
+          else if (status === 'paused') resume()
+          break
+        case 'ArrowRight':
+          e.preventDefault()
+          if (status === 'running' || status === 'paused') skip()
+          break
+        case 'ArrowLeft':
+          e.preventDefault()
+          if ((status === 'running' || status === 'paused') && stepIndex > 0) previous()
+          break
+        case 'Escape':
+          if (!exitOpen) {
+            if (status === 'running') pause()
+            setExitOpen(true)
+          }
+          break
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [status, stepIndex, exitOpen, pause, resume, skip, previous])
+
+  // Screen wake lock — prevent display sleep while timer is running
+  useEffect(() => {
+    if (status !== 'running') return
+    if (!('wakeLock' in navigator)) return
+    let lock: WakeLockSentinel | null = null
+    navigator.wakeLock.request('screen').then((wl) => { lock = wl }).catch(() => {})
+    return () => { lock?.release().catch(() => {}) }
+  }, [status])
+
   // Last-3-seconds tick beep + end chime (suppressed for rep-based steps)
   useEffect(() => {
     const step = steps[stepIndex]
@@ -249,7 +287,7 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
       </div>
 
       {/* Bottom controls */}
-      <div className="sticky bottom-0 z-10 flex items-center justify-around px-4 py-4 bg-background/95 backdrop-blur border-t border-border">
+      <div className="sticky bottom-0 z-10 flex items-center justify-around px-4 pt-4 bg-background/95 backdrop-blur border-t border-border" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
         <button
           onClick={previous}
           disabled={stepIndex === 0}
@@ -260,6 +298,7 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
             <path d="M15 4l-8 6 8 6V4z" fill="currentColor" />
           </svg>
           Back
+          <span className="hidden md:block text-[10px] text-muted-foreground/50 font-mono leading-none">←</span>
         </button>
 
         <button
@@ -283,6 +322,7 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
               Pause
             </>
           )}
+          <span className="hidden md:block text-[10px] text-primary-foreground/60 font-mono leading-none">Space</span>
         </button>
 
         <button
@@ -294,6 +334,7 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
             <rect x="14" y="4" width="2" height="12" rx="1" fill="currentColor" />
           </svg>
           Next
+          <span className="hidden md:block text-[10px] text-muted-foreground/50 font-mono leading-none">→</span>
         </button>
 
         <button
@@ -304,6 +345,7 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
             <path d="M16 16l-4-4m0 0l-4-4m4 4l4-4m-4 4l-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
           Exit
+          <span className="hidden md:block text-[10px] text-muted-foreground/50 font-mono leading-none">Esc</span>
         </button>
       </div>
 

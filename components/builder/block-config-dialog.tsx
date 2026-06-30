@@ -75,7 +75,7 @@ export function BlockConfigDialog({ block, onSave }: BlockConfigDialogProps) {
       >
         <Settings2 className="h-3.5 w-3.5" />
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[85dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Configure Block</DialogTitle>
         </DialogHeader>

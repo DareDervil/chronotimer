@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import type { Exercise } from '@/types/database'
 import {
   Sheet,
@@ -49,6 +50,16 @@ interface ExerciseDetailSheetProps {
 }
 
 export function ExerciseDetailSheet({ exercise, onClose }: ExerciseDetailSheetProps) {
+  useEffect(() => {
+    if (!exercise) return
+    const scrollY = window.scrollY
+    document.body.style.cssText = `position:fixed;top:-${scrollY}px;width:100%;overflow:hidden`
+    return () => {
+      document.body.style.cssText = ''
+      window.scrollTo(0, scrollY)
+    }
+  }, [exercise])
+
   return (
     <Sheet open={!!exercise} onOpenChange={(open) => { if (!open) onClose() }}>
       <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto gap-0 p-0">

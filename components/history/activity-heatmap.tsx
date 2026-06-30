@@ -1,8 +1,10 @@
 'use client'
 
+import { useState } from 'react'
+
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 const DAY_LABELS: Record<number, string> = { 1: 'Mon', 3: 'Wed', 5: 'Fri' }
-const CELL_SIZE = 11 // px, controls gap too
+const CELL_SIZE = 13 // px, controls gap too
 const WEEKS = 52
 
 function toKey(d: Date): string {
@@ -61,9 +63,10 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
   const weeks = buildGrid()
   const monthLabels = buildMonthLabels(weeks)
   const today = toKey(new Date())
+  const [tapped, setTapped] = useState<string | null>(null)
 
   return (
-    <div className="overflow-x-auto pb-1">
+    <div className="overflow-x-auto pb-1" onClick={() => setTapped(null)}>
       <div className="inline-flex gap-3 min-w-max">
         {/* Day labels column */}
         <div className="flex flex-col justify-end" style={{ marginTop: 18 }}>
@@ -109,10 +112,15 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
                     <div
                       key={key}
                       title={label}
+                      onClick={(e) => {
+                        if (isFuture || !label) return
+                        e.stopPropagation()
+                        setTapped(tapped === key ? null : key)
+                      }}
                       style={{ width: CELL_SIZE, height: CELL_SIZE }}
-                      className={`rounded-sm transition-opacity ${
-                        isFuture ? 'opacity-0' : cellColor(count)
-                      }`}
+                      className={`rounded-sm transition-opacity cursor-pointer ${
+                        isFuture ? 'opacity-0 pointer-events-none' : cellColor(count)
+                      } ${tapped === key ? 'ring-1 ring-foreground/60' : ''}`}
                     />
                   )
                 })}
@@ -134,6 +142,18 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
         ))}
         <span>More</span>
       </div>
+
+      {/* Tap tooltip for mobile */}
+      {tapped && (() => {
+        const count = data[tapped] ?? 0
+        const date = new Date(tapped + 'T00:00:00')
+        const label = count > 0
+          ? `${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} · ${count} session${count > 1 ? 's' : ''}`
+          : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        return (
+          <p className="mt-2 text-xs text-center text-muted-foreground">{label}</p>
+        )
+      })()}
     </div>
   )
 }

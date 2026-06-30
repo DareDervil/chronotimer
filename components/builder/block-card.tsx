@@ -170,7 +170,7 @@ function SortableExerciseItem({
       <button
         {...attributes}
         {...listeners}
-        className="cursor-grab text-muted-foreground hover:text-foreground active:cursor-grabbing"
+        className="cursor-grab text-muted-foreground hover:text-foreground active:cursor-grabbing hidden md:flex"
       >
         <GripVertical className="h-3.5 w-3.5" />
       </button>

@@ -64,28 +64,30 @@ export default async function WorkoutsPage() {
                   <CardDescription className="line-clamp-2">{workout.description}</CardDescription>
                 )}
               </CardHeader>
-              <CardFooter className="gap-2">
+              <CardFooter className="flex-col gap-2 items-stretch">
                 <Link
                   href={`/workouts/${workout.id}/run`}
-                  className={cn(buttonVariants({ size: 'sm' }), 'flex-1')}
+                  className={cn(buttonVariants({ size: 'sm' }), 'w-full')}
                 >
                   <Play className="h-3.5 w-3.5 mr-1.5" />
                   Start
                 </Link>
-                <Link
-                  href={`/workouts/${workout.id}/edit`}
-                  className={buttonVariants({ variant: 'outline', size: 'sm' })}
-                >
-                  <Pencil className="h-3.5 w-3.5 mr-1.5" />
-                  Edit
-                </Link>
-                <ShareDialog
-                  workoutId={workout.id}
-                  initialIsPublic={workout.is_public}
-                  initialSlug={workout.share_slug}
-                  label="Share"
-                />
-                <DeleteWorkoutButton workoutId={workout.id} workoutName={workout.name} label="Delete" />
+                <div className="flex gap-2">
+                  <Link
+                    href={`/workouts/${workout.id}/edit`}
+                    className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'flex-1')}
+                  >
+                    <Pencil className="h-3.5 w-3.5 mr-1.5" />
+                    Edit
+                  </Link>
+                  <ShareDialog
+                    workoutId={workout.id}
+                    initialIsPublic={workout.is_public}
+                    initialSlug={workout.share_slug}
+                    label="Share"
+                  />
+                  <DeleteWorkoutButton workoutId={workout.id} workoutName={workout.name} label="Delete" />
+                </div>
               </CardFooter>
             </Card>
           ))}
