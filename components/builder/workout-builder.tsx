@@ -15,6 +15,7 @@ import {
 } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
 import { Plus, Save, Trash2, ChevronRight, Play, X } from 'lucide-react'
+import { Drawer } from '@/components/ui/drawer'
 import { toast } from 'sonner'
 import type { BlockConfig, BlockType, Exercise, PhaseType } from '@/types/database'
 import type { BuilderBlock, BuilderBlockExercise, BuilderPhase, BuilderWorkout } from '@/types/builder'
@@ -467,18 +468,15 @@ export function WorkoutBuilder({ exercises, initialWorkout }: WorkoutBuilderProp
       </DragOverlay>
     </DndContext>
 
-    {/* Mobile exercise picker — outside DndContext so TouchSensor cannot intercept scroll/taps */}
-    {mobileSheetOpen && (
-      <DndContext id="mobile-sheet">
-        <div
-          className="fixed inset-0 z-40 bg-black/50"
-          style={{ touchAction: 'manipulation' }}
-          onClick={() => setMobileSheetOpen(false)}
-        />
-        <div
-          className="fixed bottom-0 inset-x-0 z-50 flex flex-col bg-popover rounded-t-2xl border-t border-border"
+    {/* Mobile exercise picker — vaul Drawer outside DndContext for reliable cross-browser scroll */}
+    <Drawer.Root open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
+      <Drawer.Portal>
+        <Drawer.Overlay className="fixed inset-0 z-40 bg-black/50" />
+        <Drawer.Content
+          className="fixed bottom-0 inset-x-0 z-50 flex flex-col bg-popover rounded-t-2xl border-t border-border focus:outline-none"
           style={{ height: '75dvh' }}
         >
+          <Drawer.Title className="sr-only">Add exercise</Drawer.Title>
           <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
             <span className="font-semibold text-sm">Add exercise</span>
             <button
@@ -490,9 +488,9 @@ export function WorkoutBuilder({ exercises, initialWorkout }: WorkoutBuilderProp
             </button>
           </div>
           <ExerciseSidebar exercises={exercises} onTapAdd={handleMobileTapAdd} />
-        </div>
-      </DndContext>
-    )}
+        </Drawer.Content>
+      </Drawer.Portal>
+    </Drawer.Root>
   </>)
 }
 

@@ -14,13 +14,13 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
-import { Plus, Play, ChevronRight } from 'lucide-react'
+import { Plus, Play, ChevronRight, X } from 'lucide-react'
 import type { BlockConfig, BlockType, Exercise, PhaseType } from '@/types/database'
 import type { BuilderBlock, BuilderBlockExercise, BuilderPhase, BuilderWorkout } from '@/types/builder'
 import type { WorkoutWithStructure } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { Drawer } from '@/components/ui/drawer'
 import { ExerciseSidebar } from './exercise-sidebar'
 import { BlockCard } from './block-card'
 import { WorkoutTimeline } from './workout-timeline'
@@ -398,19 +398,29 @@ export function GuestWorkoutBuilder({ exercises }: GuestWorkoutBuilderProps) {
       </DragOverlay>
     </DndContext>
 
-    {/* Mobile exercise picker — outside DndContext so TouchSensor cannot intercept scroll/taps */}
-    <DndContext id="guest-mobile-sheet">
-      <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
-        <SheetContent side="bottom" className="h-[75vh] p-0 gap-0">
-          <SheetHeader className="px-4 pt-4 pb-2 border-b shrink-0">
-            <SheetTitle>Add exercise</SheetTitle>
-          </SheetHeader>
-          <div className="flex-1 overflow-hidden min-h-0">
-            <ExerciseSidebar exercises={exercises} onTapAdd={handleMobileTapAdd} />
+    {/* Mobile exercise picker — vaul Drawer outside DndContext for reliable cross-browser scroll */}
+    <Drawer.Root open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
+      <Drawer.Portal>
+        <Drawer.Overlay className="fixed inset-0 z-40 bg-black/50" />
+        <Drawer.Content
+          className="fixed bottom-0 inset-x-0 z-50 flex flex-col bg-popover rounded-t-2xl border-t border-border focus:outline-none"
+          style={{ height: '75dvh' }}
+        >
+          <Drawer.Title className="sr-only">Add exercise</Drawer.Title>
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+            <span className="font-semibold text-sm">Add exercise</span>
+            <button
+              onClick={() => setMobileSheetOpen(false)}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
-        </SheetContent>
-      </Sheet>
-    </DndContext>
+          <ExerciseSidebar exercises={exercises} onTapAdd={handleMobileTapAdd} />
+        </Drawer.Content>
+      </Drawer.Portal>
+    </Drawer.Root>
   </>)
 }
 
