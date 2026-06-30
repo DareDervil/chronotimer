@@ -35,7 +35,7 @@ export default function AboutPage() {
             <p>
               Built and maintained by{' '}
             <a
-              href="mailto:dimitrist89@proton.me"
+              href="mailto:hello@chronotimer.gr"
               className="text-foreground font-medium underline underline-offset-4 hover:text-primary transition-colors"
             >
               Dimitrios Tsioumas

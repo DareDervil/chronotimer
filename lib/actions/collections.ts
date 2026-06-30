@@ -118,7 +118,7 @@ export async function addWorkoutToCollection(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Not authenticated')
 
-  // Verify ownership
+  // Verify the caller owns this collection
   const { data: col } = await supabase
     .from('collections')
     .select('id')
@@ -126,6 +126,27 @@ export async function addWorkoutToCollection(
     .eq('user_id', user.id)
     .single()
   if (!col) throw new Error('Collection not found')
+
+  // Fetch the full workout structure to deep-copy
+  // RLS ensures only owned or public workouts are accessible
+  const { data: source, error: fetchErr } = await supabase
+    .from('workouts')
+    .select(`
+      id, name, description,
+      phases:workout_phases(
+        id, phase_type, order_index,
+        blocks:workout_blocks(
+          id, block_type, config, order_index,
+          exercises:block_exercises(
+            id, exercise_id, duration_s, reps, sets, rest_after_s, order_index
+          )
+        )
+      )
+    `)
+    .eq('id', workoutId)
+    .single()
+
+  if (fetchErr || !source) throw new Error('Workout not found')
 
   // Get next order_index
   const { data: last } = await supabase
@@ -138,21 +159,57 @@ export async function addWorkoutToCollection(
 
   const nextIndex = last ? last.order_index + 1 : 0
 
-  // Check for duplicate before inserting
-  const { data: existing } = await supabase
-    .from('collection_workouts')
+  // Deep-copy: new workout record owned by this user (private, no slug)
+  const { data: newWorkout, error: wErr } = await supabase
+    .from('workouts')
+    .insert({ user_id: user.id, name: source.name, description: source.description ?? null, is_public: false, share_slug: null })
     .select('id')
-    .eq('collection_id', collectionId)
-    .eq('workout_id', workoutId)
-    .maybeSingle()
+    .single()
+  if (wErr || !newWorkout) throw wErr ?? new Error('Failed to copy workout')
 
-  if (existing) throw new Error('already_in_collection')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const phases = [...((source as any).phases ?? [])].sort((a: any, b: any) => a.order_index - b.order_index)
+  for (const phase of phases) {
+    const { data: newPhase, error: pErr } = await supabase
+      .from('workout_phases')
+      .insert({ workout_id: newWorkout.id, phase_type: phase.phase_type, order_index: phase.order_index })
+      .select('id')
+      .single()
+    if (pErr || !newPhase) throw pErr ?? new Error('Failed to copy phase')
 
-  const { error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const blocks = [...(phase.blocks ?? [])].sort((a: any, b: any) => a.order_index - b.order_index)
+    for (const block of blocks) {
+      const { data: newBlock, error: bErr } = await supabase
+        .from('workout_blocks')
+        .insert({ phase_id: newPhase.id, block_type: block.block_type, config: block.config, order_index: block.order_index })
+        .select('id')
+        .single()
+      if (bErr || !newBlock) throw bErr ?? new Error('Failed to copy block')
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const exercises = [...(block.exercises ?? [])].sort((a: any, b: any) => a.order_index - b.order_index)
+      if (exercises.length > 0) {
+        const exRows = exercises.map((ex: any) => ({
+          block_id: newBlock.id,
+          exercise_id: ex.exercise_id,
+          duration_s: ex.duration_s,
+          reps: ex.reps,
+          sets: ex.sets,
+          rest_after_s: ex.rest_after_s,
+          order_index: ex.order_index,
+        }))
+        const { error: exErr } = await supabase.from('block_exercises').insert(exRows)
+        if (exErr) throw exErr
+      }
+    }
+  }
+
+  // Link the copy to the collection
+  const { error: cwErr } = await supabase
     .from('collection_workouts')
-    .insert({ collection_id: collectionId, workout_id: workoutId, order_index: nextIndex })
-
-  if (error) throw error
+    .insert({ collection_id: collectionId, workout_id: newWorkout.id, order_index: nextIndex })
+  if (cwErr) throw cwErr
 }
 
 export async function removeWorkoutFromCollection(
