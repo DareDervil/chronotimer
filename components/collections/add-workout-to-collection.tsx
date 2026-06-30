@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Plus, Check } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -47,6 +48,13 @@ export function AddWorkoutToCollection({ workout, collections }: AddWorkoutToCol
         setState((s) => ({ ...s, [collectionId]: true }))
       }
       router.refresh()
+    } catch (err) {
+      if (err instanceof Error && err.message === 'already_in_collection') {
+        toast.error('Already in this collection')
+        setState((s) => ({ ...s, [collectionId]: true }))
+      } else {
+        toast.error('Something went wrong')
+      }
     } finally {
       setPending(null)
     }

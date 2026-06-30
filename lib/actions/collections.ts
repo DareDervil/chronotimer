@@ -82,9 +82,25 @@ export async function setCollectionPublic(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Not authenticated')
 
+  // When making public, read the existing slug first so we can
+  // explicitly preserve it — prevents the DB from regenerating a new
+  // slug on every re-share if a trigger is involved.
+  let updatePayload: Record<string, unknown> = { is_public: isPublic }
+  if (isPublic) {
+    const { data: current } = await supabase
+      .from('collections')
+      .select('share_slug')
+      .eq('id', collectionId)
+      .eq('user_id', user.id)
+      .single()
+    if (current?.share_slug) {
+      updatePayload = { is_public: true, share_slug: current.share_slug }
+    }
+  }
+
   const { data, error } = await supabase
     .from('collections')
-    .update({ is_public: isPublic })
+    .update(updatePayload)
     .eq('id', collectionId)
     .eq('user_id', user.id)
     .select('share_slug')
@@ -122,6 +138,16 @@ export async function addWorkoutToCollection(
 
   const nextIndex = last ? last.order_index + 1 : 0
 
+  // Check for duplicate before inserting
+  const { data: existing } = await supabase
+    .from('collection_workouts')
+    .select('id')
+    .eq('collection_id', collectionId)
+    .eq('workout_id', workoutId)
+    .maybeSingle()
+
+  if (existing) throw new Error('already_in_collection')
+
   const { error } = await supabase
     .from('collection_workouts')
     .insert({ collection_id: collectionId, workout_id: workoutId, order_index: nextIndex })
@@ -137,6 +163,15 @@ export async function removeWorkoutFromCollection(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Not authenticated')
 
+  // Verify the caller owns this collection before deleting
+  const { data: col } = await supabase
+    .from('collections')
+    .select('id')
+    .eq('id', collectionId)
+    .eq('user_id', user.id)
+    .single()
+  if (!col) throw new Error('Collection not found')
+
   const { error } = await supabase
     .from('collection_workouts')
     .delete()
@@ -151,11 +186,27 @@ export async function cloneCollection(slug: string): Promise<{ id: string }> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Not authenticated')
 
+  // Fetch full workout structure — phases → blocks → exercises
   const { data: source, error } = await supabase
     .from('collections')
     .select(`
       *,
-      workouts:collection_workouts(*, workout:workout_id(*))
+      workouts:collection_workouts(
+        order_index,
+        workout_id,
+        workout:workout_id(
+          id, name, description,
+          phases:workout_phases(
+            id, phase_type, order_index,
+            blocks:workout_blocks(
+              id, block_type, config, order_index,
+              exercises:block_exercises(
+                id, exercise_id, duration_s, reps, sets, rest_after_s, order_index
+              )
+            )
+          )
+        )
+      )
     `)
     .eq('share_slug', slug)
     .eq('is_public', true)
@@ -163,6 +214,7 @@ export async function cloneCollection(slug: string): Promise<{ id: string }> {
 
   if (error || !source) throw error ?? new Error('Collection not found')
 
+  // Create the new collection
   const { data: newCol, error: cErr } = await supabase
     .from('collections')
     .insert({
@@ -175,15 +227,70 @@ export async function cloneCollection(slug: string): Promise<{ id: string }> {
 
   if (cErr || !newCol) throw cErr ?? new Error('Failed to create collection')
 
-  const sorted = sortCollectionWorkouts(source)
-  if (sorted.workouts.length > 0) {
-    const rows = sorted.workouts.map((cw, i) => ({
-      collection_id: newCol.id,
-      workout_id: cw.workout_id,
-      order_index: i,
-    }))
-    const { error: wErr } = await supabase.from('collection_workouts').insert(rows)
-    if (wErr) throw wErr
+  // Sort by order_index and deep-copy each workout
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sortedCws = [...(source.workouts ?? [])].sort((a: any, b: any) => a.order_index - b.order_index)
+  const newWorkoutIds: string[] = []
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  for (const cw of sortedCws as any[]) {
+    const w = cw.workout
+    if (!w) continue // deleted workout — skip cleanly
+
+    // 1. New workout record (private, no slug)
+    const { data: newWorkout, error: wErr } = await supabase
+      .from('workouts')
+      .insert({ user_id: user.id, name: w.name, description: w.description ?? null, is_public: false, share_slug: null })
+      .select('id')
+      .single()
+    if (wErr || !newWorkout) throw wErr ?? new Error('Failed to copy workout')
+
+    // 2. Phases
+    const phases = [...(w.phases ?? [])].sort((a: any, b: any) => a.order_index - b.order_index)
+    for (const phase of phases) {
+      const { data: newPhase, error: pErr } = await supabase
+        .from('workout_phases')
+        .insert({ workout_id: newWorkout.id, phase_type: phase.phase_type, order_index: phase.order_index })
+        .select('id')
+        .single()
+      if (pErr || !newPhase) throw pErr ?? new Error('Failed to copy phase')
+
+      // 3. Blocks
+      const blocks = [...(phase.blocks ?? [])].sort((a: any, b: any) => a.order_index - b.order_index)
+      for (const block of blocks) {
+        const { data: newBlock, error: bErr } = await supabase
+          .from('workout_blocks')
+          .insert({ phase_id: newPhase.id, block_type: block.block_type, config: block.config, order_index: block.order_index })
+          .select('id')
+          .single()
+        if (bErr || !newBlock) throw bErr ?? new Error('Failed to copy block')
+
+        // 4. Exercises (batch insert)
+        const exercises = [...(block.exercises ?? [])].sort((a: any, b: any) => a.order_index - b.order_index)
+        if (exercises.length > 0) {
+          const exRows = exercises.map((ex: any) => ({
+            block_id: newBlock.id,
+            exercise_id: ex.exercise_id,
+            duration_s: ex.duration_s,
+            reps: ex.reps,
+            sets: ex.sets,
+            rest_after_s: ex.rest_after_s,
+            order_index: ex.order_index,
+          }))
+          const { error: exErr } = await supabase.from('block_exercises').insert(exRows)
+          if (exErr) throw exErr
+        }
+      }
+    }
+
+    newWorkoutIds.push(newWorkout.id)
+  }
+
+  // Link the copied workouts to the new collection
+  if (newWorkoutIds.length > 0) {
+    const rows = newWorkoutIds.map((wid, i) => ({ collection_id: newCol.id, workout_id: wid, order_index: i }))
+    const { error: cwErr } = await supabase.from('collection_workouts').insert(rows)
+    if (cwErr) throw cwErr
   }
 
   return { id: newCol.id }
