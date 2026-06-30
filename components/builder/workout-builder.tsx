@@ -458,7 +458,7 @@ export function WorkoutBuilder({ exercises, initialWorkout }: WorkoutBuilderProp
           <SheetHeader className="px-4 pt-4 pb-2 border-b shrink-0">
             <SheetTitle>Add exercise</SheetTitle>
           </SheetHeader>
-          <div className="flex-1 overflow-hidden min-h-0">
+          <div className="flex-1 min-h-0">
             <ExerciseSidebar exercises={exercises} onTapAdd={handleMobileTapAdd} />
           </div>
         </SheetContent>

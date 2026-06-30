@@ -180,7 +180,7 @@ export function ExerciseSidebar({ exercises, onTapAdd }: ExerciseSidebarProps) {
       <div className="h-px bg-border mx-3" />
 
       {/* Exercise list */}
-      <div className="flex-1 overflow-y-auto p-2 space-y-1">
+      <div className="flex-1 overflow-y-auto touch-pan-y p-2 space-y-1">
         {filtered.length === 0 ? (
           <p className="text-xs text-muted-foreground text-center py-6">No exercises found</p>
         ) : (
