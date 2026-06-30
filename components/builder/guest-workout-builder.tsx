@@ -314,7 +314,7 @@ export function GuestWorkoutBuilder({ exercises }: GuestWorkoutBuilderProps) {
 
   const hasBlocks = workout.phases.some((p) => p.blocks.length > 0)
 
-  return (
+  return (<>
     <DndContext
       id="guest-workout-builder"
       sensors={sensors}
@@ -383,18 +383,6 @@ export function GuestWorkoutBuilder({ exercises }: GuestWorkoutBuilderProps) {
         </div>
       </div>
 
-      {/* Mobile exercise picker */}
-      <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
-        <SheetContent side="bottom" className="h-[75vh] p-0 gap-0">
-          <SheetHeader className="px-4 pt-4 pb-2 border-b shrink-0">
-            <SheetTitle>Add exercise</SheetTitle>
-          </SheetHeader>
-          <div className="flex-1 overflow-hidden min-h-0">
-            <ExerciseSidebar exercises={exercises} onTapAdd={handleMobileTapAdd} />
-          </div>
-        </SheetContent>
-      </Sheet>
-
       {/* Drag overlay */}
       <DragOverlay>
         {activeItem?.type === 'sidebar' && (
@@ -409,7 +397,21 @@ export function GuestWorkoutBuilder({ exercises }: GuestWorkoutBuilderProps) {
         )}
       </DragOverlay>
     </DndContext>
-  )
+
+    {/* Mobile exercise picker — outside DndContext so TouchSensor cannot intercept scroll/taps */}
+    <DndContext id="guest-mobile-sheet">
+      <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
+        <SheetContent side="bottom" className="h-[75vh] p-0 gap-0">
+          <SheetHeader className="px-4 pt-4 pb-2 border-b shrink-0">
+            <SheetTitle>Add exercise</SheetTitle>
+          </SheetHeader>
+          <div className="flex-1 overflow-hidden min-h-0">
+            <ExerciseSidebar exercises={exercises} onTapAdd={handleMobileTapAdd} />
+          </div>
+        </SheetContent>
+      </Sheet>
+    </DndContext>
+  </>)
 }
 
 // ── Phase section (same as auth builder) ─────────────────────────────────────

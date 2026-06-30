@@ -368,7 +368,7 @@ export function WorkoutBuilder({ exercises, initialWorkout }: WorkoutBuilderProp
 
   // ── Render ───────────────────────────────────────────────────────────────────
 
-  return (
+  return (<>
     <DndContext id="workout-builder" sensors={sensors} collisionDetection={closestCenter} onDragStart={onDragStart} onDragEnd={onDragEnd}>
       <div className="flex flex-col h-[calc(100vh-4rem)] md:h-screen">
         {/* Header */}
@@ -452,32 +452,6 @@ export function WorkoutBuilder({ exercises, initialWorkout }: WorkoutBuilderProp
         </div>
       </div>
 
-      {/* Mobile exercise picker — hand-rolled fixed panel for reliable iOS scroll */}
-      {mobileSheetOpen && (
-        <>
-          <div
-            className="fixed inset-0 z-40 bg-black/50"
-            onClick={() => setMobileSheetOpen(false)}
-          />
-          <div
-            className="fixed bottom-0 inset-x-0 z-50 flex flex-col bg-popover rounded-t-2xl border-t border-border"
-            style={{ height: '75dvh' }}
-          >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-              <span className="font-semibold text-sm">Add exercise</span>
-              <button
-                onClick={() => setMobileSheetOpen(false)}
-                className="text-muted-foreground hover:text-foreground transition-colors"
-                aria-label="Close"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <ExerciseSidebar exercises={exercises} onTapAdd={handleMobileTapAdd} />
-          </div>
-        </>
-      )}
-
       {/* Drag overlay */}
       <DragOverlay>
         {activeItem?.type === 'sidebar' && (
@@ -492,7 +466,34 @@ export function WorkoutBuilder({ exercises, initialWorkout }: WorkoutBuilderProp
         )}
       </DragOverlay>
     </DndContext>
-  )
+
+    {/* Mobile exercise picker — outside DndContext so TouchSensor cannot intercept scroll/taps */}
+    {mobileSheetOpen && (
+      <DndContext id="mobile-sheet">
+        <div
+          className="fixed inset-0 z-40 bg-black/50"
+          style={{ touchAction: 'manipulation' }}
+          onClick={() => setMobileSheetOpen(false)}
+        />
+        <div
+          className="fixed bottom-0 inset-x-0 z-50 flex flex-col bg-popover rounded-t-2xl border-t border-border"
+          style={{ height: '75dvh' }}
+        >
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+            <span className="font-semibold text-sm">Add exercise</span>
+            <button
+              onClick={() => setMobileSheetOpen(false)}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <ExerciseSidebar exercises={exercises} onTapAdd={handleMobileTapAdd} />
+        </div>
+      </DndContext>
+    )}
+  </>)
 }
 
 // ─── PhaseSection ──────────────────────────────────────────────────────────────
