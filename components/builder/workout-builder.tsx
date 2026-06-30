@@ -14,7 +14,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
-import { Plus, Save, Trash2, ChevronRight, Play } from 'lucide-react'
+import { Plus, Save, Trash2, ChevronRight, Play, X } from 'lucide-react'
 import { toast } from 'sonner'
 import type { BlockConfig, BlockType, Exercise, PhaseType } from '@/types/database'
 import type { BuilderBlock, BuilderBlockExercise, BuilderPhase, BuilderWorkout } from '@/types/builder'
@@ -22,7 +22,7 @@ import type { WorkoutWithStructure } from '@/types/database'
 import { createWorkout, deleteWorkout, updateWorkout } from '@/lib/actions/workouts'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+
 import { ExerciseSidebar } from './exercise-sidebar'
 import { BlockCard } from './block-card'
 import { ShareDialog } from './share-dialog'
@@ -452,17 +452,31 @@ export function WorkoutBuilder({ exercises, initialWorkout }: WorkoutBuilderProp
         </div>
       </div>
 
-      {/* Mobile exercise picker sheet */}
-      <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
-        <SheetContent side="bottom" className="p-0 gap-0" style={{ height: '75vh' }}>
-          <SheetHeader className="px-4 pt-4 pb-2 border-b shrink-0">
-            <SheetTitle>Add exercise</SheetTitle>
-          </SheetHeader>
-          <div className="flex-1 min-h-0">
+      {/* Mobile exercise picker — hand-rolled fixed panel for reliable iOS scroll */}
+      {mobileSheetOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/50"
+            onClick={() => setMobileSheetOpen(false)}
+          />
+          <div
+            className="fixed bottom-0 inset-x-0 z-50 flex flex-col bg-popover rounded-t-2xl border-t border-border"
+            style={{ height: '75dvh' }}
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+              <span className="font-semibold text-sm">Add exercise</span>
+              <button
+                onClick={() => setMobileSheetOpen(false)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
             <ExerciseSidebar exercises={exercises} onTapAdd={handleMobileTapAdd} />
           </div>
-        </SheetContent>
-      </Sheet>
+        </>
+      )}
 
       {/* Drag overlay */}
       <DragOverlay>
