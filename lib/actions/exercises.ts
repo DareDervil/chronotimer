@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { requireUser } from '@/lib/actions/require-user'
 import type { ExerciseCategory } from '@/types/database'
 
 export async function createCustomExercise(data: {
@@ -12,9 +12,7 @@ export async function createCustomExercise(data: {
   secondary_muscles: string[]
   equipment: string[]
 }): Promise<void> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not authenticated')
+  const { supabase, user } = await requireUser()
 
   const { error } = await supabase.from('exercises').insert({
     name: data.name.trim(),
@@ -32,9 +30,7 @@ export async function createCustomExercise(data: {
 }
 
 export async function deleteCustomExercise(exerciseId: string): Promise<void> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not authenticated')
+  const { supabase, user } = await requireUser()
 
   const { error } = await supabase
     .from('exercises')

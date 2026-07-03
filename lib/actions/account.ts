@@ -1,20 +1,12 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { requireUser } from '@/lib/actions/require-user'
 
-export async function deleteAccount(): Promise<{ success?: true; error?: string }> {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return { error: 'Not authenticated' }
-  }
+export async function deleteAccount(): Promise<void> {
+  const { supabase } = await requireUser()
 
   const { error } = await supabase.rpc('delete_user_account')
-  if (error) {
-    return { error: error.message }
-  }
+  if (error) throw new Error(error.message)
 
   await supabase.auth.signOut()
-  return { success: true }
 }

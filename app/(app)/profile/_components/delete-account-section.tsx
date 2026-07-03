@@ -24,15 +24,10 @@ export function DeleteAccountSection() {
     if (!confirmed) return
     setLoading(true)
     try {
-      const result = await deleteAccount()
-      if (result.error) {
-        toast.error(result.error)
-        setLoading(false)
-        return
-      }
+      await deleteAccount()
       router.push('/login')
-    } catch {
-      toast.error('Something went wrong. Please try again.')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
       setLoading(false)
     }
   }

@@ -1,11 +1,9 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { requireUser } from '@/lib/actions/require-user'
 
 export async function getSessionDetail(sessionId: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not authenticated')
+  const { supabase, user } = await requireUser()
 
   const { data, error } = await supabase
     .from('workout_sessions')
@@ -34,9 +32,7 @@ export async function getSessionDetail(sessionId: string) {
 }
 
 export async function deleteSession(sessionId: string): Promise<void> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not authenticated')
+  const { supabase, user } = await requireUser()
 
   const { error } = await supabase
     .from('workout_sessions')
@@ -48,9 +44,7 @@ export async function deleteSession(sessionId: string): Promise<void> {
 }
 
 export async function getMoreSessions(offset: number) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not authenticated')
+  const { supabase, user } = await requireUser()
 
   const { data, error } = await supabase
     .from('workout_sessions')
@@ -70,9 +64,7 @@ export async function saveSession(
   completedAt: string,
   notes?: string,
 ): Promise<void> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not authenticated')
+  const { supabase, user } = await requireUser()
 
   const { error } = await supabase.from('workout_sessions').insert({
     user_id: user.id,

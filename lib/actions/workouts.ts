@@ -1,13 +1,11 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { requireUser } from '@/lib/actions/require-user'
 import type { SaveWorkoutInput, BuilderPhase } from '@/types/builder'
 import type { WorkoutWithStructure } from '@/types/database'
 
 export async function createWorkout(input: SaveWorkoutInput): Promise<{ id: string }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not authenticated')
+  const { supabase } = await requireUser()
 
   const { data: workoutId, error } = await supabase.rpc('save_workout', {
     p_workout_id: null,
@@ -21,9 +19,7 @@ export async function createWorkout(input: SaveWorkoutInput): Promise<{ id: stri
 }
 
 export async function updateWorkout(workoutId: string, input: SaveWorkoutInput): Promise<void> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not authenticated')
+  const { supabase } = await requireUser()
 
   const { error } = await supabase.rpc('save_workout', {
     p_workout_id: workoutId,
@@ -35,9 +31,7 @@ export async function updateWorkout(workoutId: string, input: SaveWorkoutInput):
 }
 
 export async function deleteWorkout(workoutId: string): Promise<void> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not authenticated')
+  const { supabase, user } = await requireUser()
 
   const { error } = await supabase
     .from('workouts')
@@ -51,9 +45,7 @@ export async function setWorkoutPublic(
   workoutId: string,
   isPublic: boolean,
 ): Promise<{ share_slug: string | null }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not authenticated')
+  const { supabase, user } = await requireUser()
 
   const { data, error } = await supabase
     .from('workouts')
@@ -68,9 +60,7 @@ export async function setWorkoutPublic(
 }
 
 export async function cloneWorkout(slug: string): Promise<{ id: string }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not authenticated')
+  const { supabase } = await requireUser()
 
   const { data: workout, error } = await supabase
     .from('workouts')

@@ -1,12 +1,11 @@
 'use server'
 
+import { requireUser } from '@/lib/actions/require-user'
 import { createClient } from '@/lib/supabase/server'
-import type { Collection, CollectionWithWorkouts } from '@/types/database'
+import type { CollectionWithWorkouts } from '@/types/database'
 
 export async function getCollections(): Promise<CollectionWithWorkouts[]> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not authenticated')
+  const { supabase, user } = await requireUser()
 
   const { data, error } = await supabase
     .from('collections')
@@ -28,9 +27,7 @@ export async function createCollection(
   name: string,
   description: string,
 ): Promise<{ id: string }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not authenticated')
+  const { supabase, user } = await requireUser()
 
   const { data, error } = await supabase
     .from('collections')
@@ -47,9 +44,7 @@ export async function updateCollection(
   name: string,
   description: string,
 ): Promise<void> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not authenticated')
+  const { supabase, user } = await requireUser()
 
   const { error } = await supabase
     .from('collections')
@@ -61,9 +56,7 @@ export async function updateCollection(
 }
 
 export async function deleteCollection(collectionId: string): Promise<void> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not authenticated')
+  const { supabase, user } = await requireUser()
 
   const { error } = await supabase
     .from('collections')
@@ -78,9 +71,7 @@ export async function setCollectionPublic(
   collectionId: string,
   isPublic: boolean,
 ): Promise<{ share_slug: string | null }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not authenticated')
+  const { supabase, user } = await requireUser()
 
   // When making public, read the existing slug first so we can
   // explicitly preserve it — prevents the DB from regenerating a new
@@ -114,9 +105,7 @@ export async function addWorkoutToCollection(
   collectionId: string,
   workoutId: string,
 ): Promise<void> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not authenticated')
+  const { supabase } = await requireUser()
 
   const { error } = await supabase.rpc('add_workout_to_collection', {
     p_collection_id: collectionId,
@@ -129,9 +118,7 @@ export async function removeWorkoutFromCollection(
   collectionId: string,
   workoutId: string,
 ): Promise<void> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not authenticated')
+  const { supabase, user } = await requireUser()
 
   // Verify the caller owns this collection before deleting
   const { data: col } = await supabase
@@ -152,9 +139,7 @@ export async function removeWorkoutFromCollection(
 }
 
 export async function cloneCollection(slug: string): Promise<{ id: string }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not authenticated')
+  const { supabase } = await requireUser()
 
   const { data: newCollectionId, error } = await supabase.rpc('clone_collection', {
     p_slug: slug,
