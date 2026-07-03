@@ -2,6 +2,8 @@
 
 import { revalidatePath } from 'next/cache'
 import { requireUser } from '@/lib/actions/require-user'
+import { parseOrThrow } from '@/lib/validation/parse'
+import { createExerciseSchema } from '@/lib/validation/exercise'
 import type { ExerciseCategory } from '@/types/database'
 
 export async function createCustomExercise(data: {
@@ -13,14 +15,15 @@ export async function createCustomExercise(data: {
   equipment: string[]
 }): Promise<void> {
   const { supabase, user } = await requireUser()
+  const validated = parseOrThrow(createExerciseSchema, data)
 
   const { error } = await supabase.from('exercises').insert({
-    name: data.name.trim(),
-    category: data.category,
-    instructions: data.instructions.trim(),
-    primary_muscles: data.primary_muscles,
-    secondary_muscles: data.secondary_muscles,
-    equipment: data.equipment,
+    name: validated.name,
+    category: validated.category,
+    instructions: validated.instructions,
+    primary_muscles: validated.primary_muscles,
+    secondary_muscles: validated.secondary_muscles,
+    equipment: validated.equipment,
     is_custom: true,
     created_by: user.id,
   })

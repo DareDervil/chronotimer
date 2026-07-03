@@ -10,9 +10,12 @@ Follow-ups from a v1.0 codebase review.
 `components/timer/active-workout.tsx` ticked via `setInterval(tick, 1000)`, decrementing a counter rather than comparing against a wall-clock timestamp. Long AMRAP/EMOM blocks (10+ min) could drift, especially if the tab was throttled/backgrounded.
 - Fixed in `lib/timer/store.ts`: `timeLeft` is now derived each tick from a wall-clock deadline (`stepEndsAt`), with `advance()` carrying the ideal deadline forward on backgrounded/late ticks instead of resetting drift at each step boundary. Verified with a behavioral test harness (mocked clock driving the real store) proving correct self-correction, multi-step background catch-up, and clean pause/resume — confirmed the same tests fail against the pre-fix code. Deployed to Vercel.
 
-## 3. Input validation
+## 3. Input validation — ✅ DONE (implemented, pending deploy)
 `zod` is a dependency but unused in `lib/actions/*`. Inputs like workout `name`, block `config` (jsonb) go to the DB with only `.trim()` — no schema validation.
-- Add zod schemas for `SaveWorkoutInput`, `BlockConfig`, exercise creation payload.
+- Added `lib/validation/workout.ts` (`saveWorkoutSchema` — covers `SaveWorkoutInput` incl. nested `BlockConfig`, block/phase enums, per-exercise numeric ranges and `exercise_id` uuid format) and `lib/validation/exercise.ts` (`createExerciseSchema` — covers `createCustomExercise`'s payload).
+- Wired into `createWorkout`/`updateWorkout` (`lib/actions/workouts.ts`) and `createCustomExercise` (`lib/actions/exercises.ts`) via a shared `parseOrThrow()` helper (`lib/validation/parse.ts`) that throws a readable `Error` on invalid input — same throw-on-failure contract as every other action.
+- Verified: `tsc --noEmit`, lint (22 problems, unchanged — no new issues), and `npm run build` all clean. Ran a real behavioral test (compiled schemas + Node, no Supabase/dev server needed since validation runs before any DB call): 14/14 assertions passed, covering both valid-payload acceptance (with whitespace-trimming) and rejection of empty names, negative durations, bogus enum values, malformed `exercise_id`, and wrong-typed `config` fields.
+- No new migration needed; pure app-code change, ships with the next Vercel deploy.
 
 ## 4. Auth-check duplication — ✅ DONE (implemented, pending deploy)
 Every action in `lib/actions/*.ts` repeated:
@@ -35,6 +38,11 @@ No automated tests found. Given this is a timer people rely on mid-workout, at m
 ## 7. Naming inconsistency — ACCEPTED, no change
 Page metadata/titles say "Chronotimer" while the project/repo is "Chronicon."
 - Confirmed intentional: Chronicon is the internal/repo name, Chronotimer is the public brand name. No action needed.
+
+## 8. No rate limiting on server actions
+Login/sign-up/password-reset abuse is already covered by Supabase's built-in `auth.rate_limit` (`supabase/config.toml`). But mutating server actions (`createWorkout`, `cloneCollection`, `addWorkoutToCollection`, `createCustomExercise`, `saveSession`, etc.) have no throttling — an authenticated user could script rapid repeated calls.
+- Lower priority than #3: these operations aren't individually expensive (no email/SMS/paid API/LLM calls), and RLS scopes writes to the caller's own rows. The real risk is availability (DB connection/CPU exhaustion from a scripted loop) rather than cost or data exposure — `cloneCollection`/`addWorkoutToCollection` also read *public* workouts, so abuse there adds read load against other users' content.
+- Options: Vercel's built-in Firewall/rate limiting (project settings, no code) as a first line, and/or `@upstash/ratelimit` wrapped around specific mutating actions (or inside `requireUser()`) for per-user limits.
 
 ---
 *Generated from a codebase review — see conversation history for full context.*

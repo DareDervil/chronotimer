@@ -1,17 +1,20 @@
 'use server'
 
 import { requireUser } from '@/lib/actions/require-user'
+import { parseOrThrow } from '@/lib/validation/parse'
+import { saveWorkoutSchema, type ValidatedWorkoutPhases } from '@/lib/validation/workout'
 import type { SaveWorkoutInput, BuilderPhase } from '@/types/builder'
 import type { WorkoutWithStructure } from '@/types/database'
 
 export async function createWorkout(input: SaveWorkoutInput): Promise<{ id: string }> {
   const { supabase } = await requireUser()
+  const parsed = parseOrThrow(saveWorkoutSchema, input)
 
   const { data: workoutId, error } = await supabase.rpc('save_workout', {
     p_workout_id: null,
-    p_name: input.name.trim(),
-    p_description: input.description.trim() || null,
-    p_phases: toStructurePayload(input.phases),
+    p_name: parsed.name,
+    p_description: parsed.description || null,
+    p_phases: toStructurePayload(parsed.phases),
   })
   if (error || !workoutId) throw error ?? new Error('Failed to create workout')
 
@@ -20,12 +23,13 @@ export async function createWorkout(input: SaveWorkoutInput): Promise<{ id: stri
 
 export async function updateWorkout(workoutId: string, input: SaveWorkoutInput): Promise<void> {
   const { supabase } = await requireUser()
+  const parsed = parseOrThrow(saveWorkoutSchema, input)
 
   const { error } = await supabase.rpc('save_workout', {
     p_workout_id: workoutId,
-    p_name: input.name.trim(),
-    p_description: input.description.trim() || null,
-    p_phases: toStructurePayload(input.phases),
+    p_name: parsed.name,
+    p_description: parsed.description || null,
+    p_phases: toStructurePayload(parsed.phases),
   })
   if (error) throw error
 }
@@ -115,7 +119,7 @@ export async function cloneWorkout(slug: string): Promise<{ id: string }> {
 
 // Shapes builder phases into the jsonb structure save_workout() expects.
 // Phases with no blocks are dropped here (previously done in insertStructure).
-function toStructurePayload(phases: BuilderPhase[]) {
+function toStructurePayload(phases: ValidatedWorkoutPhases) {
   return phases
     .filter((p) => p.blocks.length > 0)
     .map((p) => ({
