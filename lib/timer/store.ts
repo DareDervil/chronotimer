@@ -35,6 +35,7 @@ interface WorkoutTimerStore {
   countdown: number
   timeLeft: number
   startedAt: number | null
+  stepEndsAt: number | null // wall-clock deadline (ms) for the current step; source of truth for timeLeft
 
   load: (workout: WorkoutWithStructure, guestMode?: boolean) => void
   startCountdown: () => void
@@ -43,7 +44,7 @@ interface WorkoutTimerStore {
   resume: () => void
   skip: () => void
   previous: () => void
-  advance: () => void
+  advance: (anchorMs?: number) => void
   reset: () => void
   restore: (stepIndex: number, timeLeft: number, startedAt: number) => void
   saveSnapshot: () => void
@@ -59,6 +60,7 @@ export const useWorkoutTimerStore = create<WorkoutTimerStore>((set, get) => ({
   countdown: 3,
   timeLeft: 0,
   startedAt: null,
+  stepEndsAt: null,
 
   load(workout: WorkoutWithStructure, guestMode = false) {
     const steps = flattenWorkout(workout)
@@ -71,6 +73,7 @@ export const useWorkoutTimerStore = create<WorkoutTimerStore>((set, get) => ({
       countdown: 3,
       timeLeft: steps[0]?.duration ?? 0,
       startedAt: null,
+      stepEndsAt: null,
     })
   },
 
@@ -79,17 +82,19 @@ export const useWorkoutTimerStore = create<WorkoutTimerStore>((set, get) => ({
   },
 
   tick() {
-    const { status, countdown, stepIndex, steps, timeLeft } = get()
+    const { status, countdown, stepIndex, steps } = get()
 
     if (status === 'countdown') {
       const next = countdown - 1
       if (next <= 0) {
         const firstStep = steps[stepIndex]
+        const duration = firstStep?.duration ?? 0
         set({
           countdown: 0,
           status: 'running',
-          timeLeft: firstStep?.duration ?? 0,
+          timeLeft: duration,
           startedAt: Date.now(),
+          stepEndsAt: Date.now() + duration * 1000,
         })
       } else {
         set({ countdown: next })
@@ -98,15 +103,25 @@ export const useWorkoutTimerStore = create<WorkoutTimerStore>((set, get) => ({
     }
 
     if (status === 'running') {
-      const step = steps[stepIndex]
-      if (!step) return
+      const { stepEndsAt } = get()
+      if (stepEndsAt === null) return
 
-      const next = timeLeft - 1
-      if (next <= 0) {
-        get().advance()
-      } else {
-        set({ timeLeft: next })
+      const now = Date.now()
+      let endsAt = stepEndsAt
+      let guard = steps.length + 1
+
+      // A tick may fire late (throttled/backgrounded tab), so the deadline
+      // can already be behind by more than one step. Advance through every
+      // step that has genuinely elapsed, carrying the real deadline forward
+      // each time (anchored on the previous deadline, not `now`) so drift
+      // never accumulates and no step is silently skipped.
+      while (now >= endsAt && guard-- > 0) {
+        get().advance(endsAt)
+        if (get().status !== 'running') return
+        endsAt = get().stepEndsAt as number
       }
+
+      set({ timeLeft: Math.max(0, Math.ceil((endsAt - now) / 1000)) })
     }
   },
 
@@ -120,8 +135,10 @@ export const useWorkoutTimerStore = create<WorkoutTimerStore>((set, get) => ({
   },
 
   resume() {
-    const { status } = get()
-    if (status === 'paused') set({ status: 'running' })
+    const { status, timeLeft } = get()
+    if (status !== 'paused') return
+    // Re-anchor the deadline to now — paused time must not count against it
+    set({ status: 'running', stepEndsAt: Date.now() + timeLeft * 1000 })
   },
 
   skip() {
@@ -133,21 +150,26 @@ export const useWorkoutTimerStore = create<WorkoutTimerStore>((set, get) => ({
     const prevIndex = stepIndex - 1
     if (prevIndex < 0) return
     const prevStep = steps[prevIndex]
-    set({ stepIndex: prevIndex, timeLeft: prevStep.duration })
+    set({ stepIndex: prevIndex, timeLeft: prevStep.duration, stepEndsAt: Date.now() + prevStep.duration * 1000 })
   },
 
-  advance() {
+  advance(anchorMs?: number) {
     const { stepIndex, steps, guestMode, workoutId, startedAt } = get()
     const nextIndex = stepIndex + 1
 
     if (nextIndex >= steps.length) {
       if (!guestMode && workoutId) removeSnapshot(workoutId)
-      set({ status: 'done' })
+      set({ status: 'done', stepEndsAt: null })
       return
     }
 
     const nextStep = steps[nextIndex]
-    set({ stepIndex: nextIndex, timeLeft: nextStep.duration })
+    // When called from tick() due to a real deadline passing, anchorMs is the
+    // previous step's ideal end time (not `now`) so any lag carries forward
+    // instead of resetting. Manual skip()/user actions omit it, anchoring on now.
+    const anchor = anchorMs ?? Date.now()
+    const nextEndsAt = anchor + nextStep.duration * 1000
+    set({ stepIndex: nextIndex, timeLeft: nextStep.duration, stepEndsAt: nextEndsAt })
 
     // Save at every step boundary so tab-close mid-step resumes at the right step
     if (!guestMode && workoutId && startedAt !== null) {
@@ -164,11 +186,12 @@ export const useWorkoutTimerStore = create<WorkoutTimerStore>((set, get) => ({
       countdown: 3,
       timeLeft: steps[0]?.duration ?? 0,
       startedAt: null,
+      stepEndsAt: null,
     })
   },
 
   restore(stepIndex: number, timeLeft: number, startedAt: number) {
-    set({ status: 'paused', stepIndex, timeLeft, startedAt })
+    set({ status: 'paused', stepIndex, timeLeft, startedAt, stepEndsAt: Date.now() + timeLeft * 1000 })
   },
 
   saveSnapshot() {
