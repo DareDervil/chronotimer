@@ -82,7 +82,9 @@ app/
 │   ├── workouts/
 │   ├── collections/
 │   ├── history/
-│   └── exercises/
+│   ├── exercises/
+│   └── profile/                Change email/password, delete account
+├── about/                       Public marketing page — no layout wrapper
 ├── try/                        Guest mode — no layout wrapper
 │   ├── page.tsx                Guest builder
 │   └── run/page.tsx            Guest timer
@@ -94,7 +96,7 @@ app/
     └── workout/[index]/run/page.tsx
 ```
 
-Route groups (`(auth)`, `(app)`) share layouts without affecting the URL. Pages outside these groups (`/try`, `/w/`, `/c/`) render in the root layout (fonts, theme, toaster) but have no sidebar.
+Route groups (`(auth)`, `(app)`) share layouts without affecting the URL. Pages outside these groups (`/about`, `/try`, `/w/`, `/c/`) render in the root layout (fonts, theme, toaster) but have no sidebar.
 
 ---
 
@@ -133,7 +135,7 @@ collection_workouts   N──1   collections
 
 ### Server actions
 
-Mutations go through Next.js server actions (`'use server'`). Each action creates its own Supabase client, calls `getUser()` to verify identity, then performs the mutation. RLS provides a second enforcement layer even if the action is called directly.
+Mutations go through Next.js server actions (`'use server'`). Each action calls the shared `requireUser()` helper (`lib/actions/require-user.ts`), which creates a Supabase client and calls `getUser()` to verify identity in one place, then performs the mutation. RLS provides a second enforcement layer even if the action is called directly.
 
 ```
 lib/actions/
@@ -143,7 +145,27 @@ lib/actions/
   collections.ts  createCollection, updateCollection, deleteCollection,
                   setCollectionPublic, addWorkoutToCollection,
                   removeWorkoutFromCollection, cloneCollection, getPublicCollection
+  account.ts      deleteAccount
+  require-user.ts requireUser() — shared auth-check + client-creation helper
 ```
+
+### Input validation
+
+Mutations that accept structured input (e.g. `createWorkout`/`updateWorkout`) validate it against a zod schema before hitting the database. `lib/validation/parse.ts` exports `parseOrThrow(schema, data)`, which wraps `schema.safeParse()` and throws a single readable `Error` on failure instead of a raw `ZodError`, so every server action fails the same way. Schemas live alongside it in `lib/validation/` (`workout.ts`, `exercise.ts`).
+
+### Atomic nested writes
+
+Mutations that write a nested structure (workout phases → blocks → exercises) run inside a Postgres `plpgsql` function called via `supabase.rpc(...)`, not a sequence of client-side `insert()` calls. A top-level RPC call is a single transaction, so a failure partway through rolls back cleanly instead of leaving orphaned rows.
+
+```
+save_workout(p_workout_id, p_name, p_description, p_phases)   — create or update a workout (015_atomic_workout_save.sql)
+copy_workout_structure(p_source_workout_id)                   — shared deep-copy helper, security invoker (016_atomic_collection_copy.sql)
+add_workout_to_collection(p_collection_id, p_workout_id)       — calls copy_workout_structure(), then links it
+clone_collection(p_slug)                                       — calls copy_workout_structure() per workout
+delete_user_account()                                          — 014_delete_user_function.sql
+```
+
+All of these use `security invoker`, so RLS still governs which rows the caller can see/copy — the RPC only buys atomicity, not elevated privilege.
 
 ---
 
@@ -194,6 +216,8 @@ idle ──startCountdown()──► countdown ──tick() × 3──► runnin
 
 Managed by Zustand (`lib/timer/store.ts`). A single `tick()` action is called by `setInterval` every second in `ActiveWorkout`. The store advances steps, fires `done` when the last step ends, and handles countdown separately.
 
+**Deadline-anchored, not decrement-based.** `timeLeft` is derived from a wall-clock deadline (`stepEndsAt = Date.now() + duration * 1000`), not decremented per tick. This matters because `setInterval` ticks can arrive late — a backgrounded or throttled mobile tab can miss several seconds (or steps) between ticks. On each `tick()`, the store loops `while (now >= stepEndsAt)`, calling `advance()` for every step that has genuinely elapsed and carrying the deadline forward from the *previous ideal deadline* rather than from `now`, so lag never accumulates or silently skips a step. `resume()` re-anchors `stepEndsAt` to `Date.now() + timeLeft * 1000` so paused time never counts against the deadline.
+
 ### Snapshot / resume
 
 On every step boundary and on pause, the store writes a snapshot to `localStorage`:
@@ -209,7 +233,7 @@ On mount, `ActiveWorkout` reads the snapshot. If valid (<24h old) and the step i
 
 ### Audio
 
-`lib/audio/beep.ts` uses the Web Audio API to synthesise beep tones at runtime — no audio files to load. Four cues: `go`, `rest`, `tick`, `done`.
+`lib/audio/beeps.ts` uses the Web Audio API to synthesise beep tones at runtime — no audio files to load. Four cues: `go`, `rest`, `tick`, `done`.
 
 ---
 
@@ -260,12 +284,14 @@ Collection (owner)
   ├── Can be made public (is_public=true)
   ├── Public URL: /c/[share_slug]
   └── CollectionWorkout[] (ordered by order_index)
-        └── → Workout (existing workout record)
+        └── → Workout (deep-copied into the caller's own workout row)
 ```
 
 Public collections expose their workouts for viewing and running without auth. The guest timer for collection workouts (`/c/[slug]/workout/[index]/run`) fetches the full workout structure server-side (using the anon client — RLS permits this for public collections) and passes it to `<ActiveWorkout guestMode />`.
 
-Copying a collection (`cloneCollection`) creates a new `Collection` row owned by the authenticated user and copies the `collection_workouts` join rows pointing to the same workout records (workouts themselves are not duplicated).
+**Adding or cloning always deep-copies the workout**, it never links to the source record. `addWorkoutToCollection` (adding a workout to a collection) and `cloneCollection` (copying a whole collection) both call the `copy_workout_structure()` RPC, which inserts a brand-new `workouts` row (+ its phases/blocks/exercises) owned by the caller before linking it via `collection_workouts`. This means each collection's workouts are independent copies — editing a workout in one collection never affects the same workout elsewhere. `cloneCollection` additionally creates a new `Collection` row ("Copy of ...") and skips any source workout that's been deleted or is no longer accessible, rather than failing the whole clone.
+
+Cloning a single public workout (`cloneWorkout`, outside a collection) follows the same deep-copy principle but takes a different path: it reads the full public workout structure client-side (one nested `select`), then calls `createWorkout()` — i.e. the `save_workout` RPC — to write it as a new, independent workout owned by the caller ("Copy of ...").
 
 ---
 
