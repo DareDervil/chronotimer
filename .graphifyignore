@@ -1,0 +1,14 @@
+# graphify's own output - don't re-graph prior runs
+graphify-out/
+
+# build artifacts / dependencies
+node_modules/
+.next/
+dist/
+
+# lockfiles - noise, not useful graph content
+package-lock.json
+pnpm-lock.yaml
+
+# trivial default Next.js assets - produce single-node communities with no real signal
+public/*.svg

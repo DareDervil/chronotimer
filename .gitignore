@@ -40,3 +40,7 @@ PROPOSED.md
 
 # Claude Code local config
 .claude/
+
+# graphify output
+graphify-out/
+GRAPH_REPORT.md
