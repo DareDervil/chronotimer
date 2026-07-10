@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { addWorkoutToCollection } from '@/lib/actions/collections'
 
@@ -26,6 +27,13 @@ export function AddWorkoutsForm({
     try {
       await addWorkoutToCollection(collectionId, workoutId)
       router.refresh()
+    } catch (err) {
+      if (err instanceof Error && err.message === 'already_in_collection') {
+        toast.error('Already in this collection')
+        router.refresh()
+      } else {
+        toast.error('Something went wrong')
+      }
     } finally {
       setPending(null)
     }

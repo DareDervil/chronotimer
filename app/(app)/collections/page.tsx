@@ -19,7 +19,7 @@ export default async function CollectionsPage() {
     .from('collections')
     .select(`
       id, name, description, is_public, share_slug, updated_at,
-      workouts:collection_workouts(count)
+      workouts:collection_workouts(workout:workout_id(is_public))
     `)
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
@@ -51,7 +51,9 @@ export default async function CollectionsPage() {
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {collections.map((col) => {
-            const count = (col.workouts as unknown as { count: number }[])?.[0]?.count ?? 0
+            const memberWorkouts = col.workouts as unknown as { workout: { is_public: boolean } | null }[]
+            const count = memberWorkouts?.length ?? 0
+            const hasPrivateWorkouts = (memberWorkouts ?? []).some((w) => w.workout && !w.workout.is_public)
             return (
               <Card key={col.id} className="hover:border-foreground/20 transition-colors flex flex-col">
                 <CardHeader className="pb-3 flex-1">
@@ -94,6 +96,7 @@ export default async function CollectionsPage() {
                     collectionId={col.id}
                     initialIsPublic={col.is_public}
                     initialSlug={col.share_slug}
+                    hasPrivateWorkouts={hasPrivateWorkouts}
                   />
                   <DeleteCollectionButton
                     collectionId={col.id}

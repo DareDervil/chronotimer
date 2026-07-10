@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Globe, Copy, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -16,6 +17,7 @@ interface CollectionShareDialogProps {
   collectionId: string
   initialIsPublic: boolean
   initialSlug: string | null
+  hasPrivateWorkouts?: boolean
   label?: string
 }
 
@@ -23,25 +25,40 @@ export function CollectionShareDialog({
   collectionId,
   initialIsPublic,
   initialSlug,
+  hasPrivateWorkouts = false,
   label,
 }: CollectionShareDialogProps) {
+  const router = useRouter()
   const [isPublic, setIsPublic] = useState(initialIsPublic)
   const [slug, setSlug] = useState<string | null>(initialSlug)
   const [pending, setPending] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [confirmingPrivateWorkouts, setConfirmingPrivateWorkouts] = useState(false)
 
   const shareUrl =
     slug && typeof window !== 'undefined' ? `${window.location.origin}/c/${slug}` : null
 
-  async function handleToggle() {
+  async function applyToggle(makeWorkoutsPublic: boolean) {
     setPending(true)
     try {
-      const { share_slug } = await setCollectionPublic(collectionId, !isPublic)
+      const { share_slug } = await setCollectionPublic(collectionId, !isPublic, makeWorkoutsPublic)
       setIsPublic((v) => !v)
       setSlug(share_slug)
+      router.refresh()
     } finally {
       setPending(false)
+      setConfirmingPrivateWorkouts(false)
     }
+  }
+
+  async function handleToggle() {
+    // Turning ON with private member workouts requires confirmation first —
+    // declining blocks the share entirely (collection stays private).
+    if (!isPublic && hasPrivateWorkouts) {
+      setConfirmingPrivateWorkouts(true)
+      return
+    }
+    await applyToggle(false)
   }
 
   async function handleCopy() {
@@ -81,7 +98,7 @@ export function CollectionShareDialog({
               role="switch"
               aria-checked={isPublic}
               onClick={handleToggle}
-              disabled={pending}
+              disabled={pending || confirmingPrivateWorkouts}
               className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 ${
                 isPublic ? 'bg-primary' : 'bg-muted-foreground/30'
               }`}
@@ -93,6 +110,28 @@ export function CollectionShareDialog({
               />
             </button>
           </div>
+
+          {confirmingPrivateWorkouts && (
+            <div className="space-y-3 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-3">
+              <p className="text-xs text-foreground">
+                This collection has private workouts. They need to be made public too so viewers can
+                see them. Make them public and share?
+              </p>
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setConfirmingPrivateWorkouts(false)}
+                  disabled={pending}
+                >
+                  Cancel
+                </Button>
+                <Button size="sm" onClick={() => applyToggle(true)} disabled={pending}>
+                  Make public &amp; share
+                </Button>
+              </div>
+            </div>
+          )}
 
           {isPublic && shareUrl ? (
             <div className="flex items-center gap-2 rounded-md border bg-muted/50 px-3 py-2">

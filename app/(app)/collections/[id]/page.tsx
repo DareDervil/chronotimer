@@ -50,8 +50,19 @@ export default async function CollectionPage({
     .eq('user_id', user.id)
     .order('name')
 
+  const { data: publicWorkouts } = await supabase
+    .from('workouts')
+    .select('id, name')
+    .eq('is_public', true)
+    .neq('user_id', user.id)
+    .order('updated_at', { ascending: false })
+    .limit(20)
+
   const inCollectionIds = new Set(items.map((i) => i.workout_id))
   const addableWorkouts = (allWorkouts ?? []).filter((w) => !inCollectionIds.has(w.id))
+  const addablePublicWorkouts = (publicWorkouts ?? []).filter((w) => !inCollectionIds.has(w.id))
+
+  const hasPrivateWorkouts = items.some((i) => i.workout && !i.workout.is_public)
 
   return (
     <div className="px-6 md:px-10 py-8 max-w-2xl mx-auto space-y-6">
@@ -85,6 +96,7 @@ export default async function CollectionPage({
               collectionId={id}
               initialIsPublic={col.is_public}
               initialSlug={col.share_slug}
+              hasPrivateWorkouts={hasPrivateWorkouts}
             />
             <DeleteCollectionButton collectionId={id} collectionName={col.name} />
           </div>
@@ -149,6 +161,16 @@ export default async function CollectionPage({
             Add workouts
           </h2>
           <AddWorkoutsForm collectionId={id} workouts={addableWorkouts} />
+        </div>
+      )}
+
+      {/* Add public workouts from other users */}
+      {addablePublicWorkouts.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            Add a public workout
+          </h2>
+          <AddWorkoutsForm collectionId={id} workouts={addablePublicWorkouts} />
         </div>
       )}
     </div>

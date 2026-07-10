@@ -70,34 +70,25 @@ export async function deleteCollection(collectionId: string): Promise<void> {
 export async function setCollectionPublic(
   collectionId: string,
   isPublic: boolean,
+  makeWorkoutsPublic = false,
 ): Promise<{ share_slug: string | null }> {
   const { supabase, user } = await requireUser()
 
-  // When making public, read the existing slug first so we can
-  // explicitly preserve it — prevents the DB from regenerating a new
-  // slug on every re-share if a trigger is involved.
-  let updatePayload: Record<string, unknown> = { is_public: isPublic }
-  if (isPublic) {
-    const { data: current } = await supabase
-      .from('collections')
-      .select('share_slug')
-      .eq('id', collectionId)
-      .eq('user_id', user.id)
-      .single()
-    if (current?.share_slug) {
-      updatePayload = { is_public: true, share_slug: current.share_slug }
-    }
-  }
+  const { error } = await supabase.rpc('set_collection_public', {
+    p_collection_id: collectionId,
+    p_is_public: isPublic,
+    p_make_workouts_public: makeWorkoutsPublic,
+  })
+  if (error) throw error
 
-  const { data, error } = await supabase
+  const { data, error: fetchError } = await supabase
     .from('collections')
-    .update(updatePayload)
+    .select('share_slug')
     .eq('id', collectionId)
     .eq('user_id', user.id)
-    .select('share_slug')
     .single()
+  if (fetchError) throw fetchError
 
-  if (error) throw error
   return { share_slug: data?.share_slug ?? null }
 }
 
@@ -111,7 +102,11 @@ export async function addWorkoutToCollection(
     p_collection_id: collectionId,
     p_workout_id: workoutId,
   })
-  if (error) throw error
+  if (error) {
+    // unique(collection_id, workout_id) violation — same reference already added
+    if (error.code === '23505') throw new Error('already_in_collection')
+    throw error
+  }
 }
 
 export async function removeWorkoutFromCollection(
