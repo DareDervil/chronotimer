@@ -87,53 +87,59 @@ export function BlockCard({ block, onUpdateConfig, onRemoveExercise, onRemoveBlo
 
       {/* Exercises */}
       <div ref={setNodeRef} className="p-2 min-h-[60px]">
-        <SortableContext items={exerciseIds} strategy={verticalListSortingStrategy}>
-          {block.exercises.length === 0 ? (
-            <div className="text-xs text-muted-foreground text-center py-3">
-              <span className="hidden md:block">Drag exercises here</span>
-              {onMobileAdd ? (
-                <button
-                  type="button"
-                  onClick={onMobileAdd}
-                  className="md:hidden text-primary font-medium"
-                >
-                  + Add exercise
-                </button>
-              ) : (
-                <span className="md:hidden">Drag exercises here</span>
-              )}
-            </div>
-          ) : (
-            <>
-              <div className="space-y-1">
-                {block.exercises.map((bex) => (
-                  <SortableExerciseItem
-                    key={bex.id}
-                    bex={bex}
-                    blockType={block.block_type}
-                    isGlobalDuration={
-                      (block.block_type === 'circuit' && !!block.config.work_s) ||
-                      (block.block_type === 'free' && block.config.mode === 'time' && !!block.config.work_s) ||
-                      (block.block_type === 'free' && block.config.mode === 'reps' && !!block.config.reps)
-                    }
-                    freeMode={block.block_type === 'free' ? (block.config.mode ?? 'time') : undefined}
-                    onRemove={() => onRemoveExercise(bex.id)}
-                    onUpdateExercise={(updates) => onUpdateExercise(bex.id, updates)}
-                  />
-                ))}
+        {block.block_type === 'rest' ? (
+          <p className="text-xs text-muted-foreground text-center py-3">
+            No exercises — pure rest
+          </p>
+        ) : (
+          <SortableContext items={exerciseIds} strategy={verticalListSortingStrategy}>
+            {block.exercises.length === 0 ? (
+              <div className="text-xs text-muted-foreground text-center py-3">
+                <span className="hidden md:block">Drag exercises here</span>
+                {onMobileAdd ? (
+                  <button
+                    type="button"
+                    onClick={onMobileAdd}
+                    className="md:hidden text-primary font-medium"
+                  >
+                    + Add exercise
+                  </button>
+                ) : (
+                  <span className="md:hidden">Drag exercises here</span>
+                )}
               </div>
-              {onMobileAdd && (
-                <button
-                  type="button"
-                  onClick={onMobileAdd}
-                  className="md:hidden mt-1.5 w-full text-xs text-muted-foreground hover:text-primary py-1.5 border border-dashed border-border rounded-md transition-colors"
-                >
-                  + Add exercise
-                </button>
-              )}
-            </>
-          )}
-        </SortableContext>
+            ) : (
+              <>
+                <div className="space-y-1">
+                  {block.exercises.map((bex) => (
+                    <SortableExerciseItem
+                      key={bex.id}
+                      bex={bex}
+                      blockType={block.block_type}
+                      isGlobalDuration={
+                        (block.block_type === 'circuit' && !!block.config.work_s) ||
+                        (block.block_type === 'free' && block.config.mode === 'time' && !!block.config.work_s) ||
+                        (block.block_type === 'free' && block.config.mode === 'reps' && !!block.config.reps)
+                      }
+                      freeMode={block.block_type === 'free' ? (block.config.mode ?? 'time') : undefined}
+                      onRemove={() => onRemoveExercise(bex.id)}
+                      onUpdateExercise={(updates) => onUpdateExercise(bex.id, updates)}
+                    />
+                  ))}
+                </div>
+                {onMobileAdd && (
+                  <button
+                    type="button"
+                    onClick={onMobileAdd}
+                    className="md:hidden mt-1.5 w-full text-xs text-muted-foreground hover:text-primary py-1.5 border border-dashed border-border rounded-md transition-colors"
+                  >
+                    + Add exercise
+                  </button>
+                )}
+              </>
+            )}
+          </SortableContext>
+        )}
       </div>
     </div>
   )

@@ -367,7 +367,9 @@ export function WorkoutBuilder({ exercises, initialWorkout, guestMode = false }:
       } else if (overId.startsWith('bex:')) {
         targetBlockId = findBlockIdByBexId(overId.slice('bex:'.length))
       }
-      if (targetBlockId) addExerciseToBlock(targetBlockId, exercise)
+      if (targetBlockId && findBlockById(targetBlockId)?.block_type !== 'rest') {
+        addExerciseToBlock(targetBlockId, exercise)
+      }
 
     } else if (activeId.startsWith('bex:')) {
       const activeBexId = activeId.slice('bex:'.length)
@@ -381,12 +383,12 @@ export function WorkoutBuilder({ exercises, initialWorkout, guestMode = false }:
 
         if (activeBlockId === overBlockId) {
           reorderExercisesInBlock(activeBlockId, activeBexId, overBexId)
-        } else {
+        } else if (findBlockById(overBlockId)?.block_type !== 'rest') {
           moveExerciseBetweenBlocks(activeBexId, activeBlockId, overBlockId, overBexId)
         }
       } else if (overId.startsWith('block:')) {
         const overBlockId = overId.slice('block:'.length)
-        if (activeBlockId !== overBlockId) {
+        if (activeBlockId !== overBlockId && findBlockById(overBlockId)?.block_type !== 'rest') {
           moveExerciseBetweenBlocks(activeBexId, activeBlockId, overBlockId)
         }
       }
