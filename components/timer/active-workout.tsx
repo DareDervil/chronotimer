@@ -291,7 +291,6 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
           isRest={currentStep?.isRest ?? false}
           isReps={currentStep?.isReps ?? false}
           repsDisplay={currentStep?.repsDisplay}
-          size={240}
         />
 
         {nextStep && (
