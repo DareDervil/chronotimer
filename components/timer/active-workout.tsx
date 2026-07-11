@@ -276,7 +276,7 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
       {/* Main content */}
       <div className="flex flex-col items-center justify-center flex-1 gap-6 px-4 py-8">
         <div className="text-center space-y-1">
-          <h2 className="text-2xl font-bold leading-tight">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
             {currentStep?.exerciseName ?? ''}
           </h2>
           <p className="text-muted-foreground">{currentStep?.label ?? ''}</p>
@@ -295,7 +295,7 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
         />
 
         {nextStep && (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm sm:text-base md:text-lg lg:text-xl text-muted-foreground">
             Next:{' '}
             <span className="font-medium text-foreground">
               {nextStep.exerciseName}
