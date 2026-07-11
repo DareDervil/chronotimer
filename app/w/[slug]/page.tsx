@@ -10,7 +10,7 @@ import type { WorkoutWithStructure } from '@/types/database'
 const PHASE_LABELS = { warmup: 'Warm-up', main: 'Main', cooldown: 'Cool-down' }
 const BLOCK_LABELS = {
   hiit: 'HIIT', amrap: 'AMRAP', emom: 'EMOM', tabata: 'Tabata',
-  circuit: 'Circuit', straight_sets: 'Straight Sets', free: 'Free-form',
+  circuit: 'Circuit', straight_sets: 'Straight Sets', free: 'Free-form', rest: 'Rest',
 }
 
 export default async function SharedWorkoutPage({ params }: { params: Promise<{ slug: string }> }) {

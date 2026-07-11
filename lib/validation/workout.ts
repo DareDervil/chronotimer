@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 const phaseType = z.enum(['warmup', 'main', 'cooldown'])
-const blockType = z.enum(['hiit', 'amrap', 'emom', 'tabata', 'circuit', 'straight_sets', 'free'])
+const blockType = z.enum(['hiit', 'amrap', 'emom', 'tabata', 'circuit', 'straight_sets', 'free', 'rest'])
 
 // Mirrors types/database.ts's BlockConfig — every field is optional since
 // lib/timer/flatten.ts already falls back to sane defaults for all of them.

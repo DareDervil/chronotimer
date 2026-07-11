@@ -20,6 +20,7 @@ const BLOCK_LABELS: Record<BlockType, string> = {
   circuit: 'Circuit',
   straight_sets: 'Straight Sets',
   free: 'Free-form',
+  rest: 'Rest',
 }
 
 function blockSummary(block: BuilderBlock): string {
@@ -42,6 +43,8 @@ function blockSummary(block: BuilderBlock): string {
     case 'free':
       if (c.mode === 'reps') return c.reps ? `${c.reps} reps/ex` : 'Per exercise · reps'
       return c.work_s ? `${c.work_s}s/ex` : 'Per exercise · timed'
+    case 'rest':
+      return c.rest_s ? `${c.rest_s}s` : ''
   }
 }
 

@@ -51,6 +51,8 @@ function calcBlockDuration(block: BuilderBlock): number | null {
       )
       return workTotal + restTotal
     }
+    case 'rest':
+      return c.rest_s ?? null
   }
 }
 
@@ -74,6 +76,7 @@ const BLOCK_META: Record<string, { bar: string; badge: string; text: string; lab
   circuit:       { bar: 'bg-emerald-500', badge: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',  text: 'text-emerald-400', label: 'Circuit' },
   straight_sets: { bar: 'bg-amber-500',   badge: 'bg-amber-500/15 text-amber-400 border-amber-500/30',        text: 'text-amber-400',   label: 'Sets' },
   free:          { bar: 'bg-sky-500',     badge: 'bg-sky-500/15 text-sky-400 border-sky-500/30',              text: 'text-sky-400',     label: 'Free-form' },
+  rest:          { bar: 'bg-slate-500',   badge: 'bg-slate-500/15 text-slate-400 border-slate-500/30',        text: 'text-slate-400',   label: 'Rest' },
 }
 
 function blockSummary(block: BuilderBlock): string {
@@ -95,6 +98,8 @@ function blockSummary(block: BuilderBlock): string {
     case 'free':
       if (c.mode === 'reps') return c.reps ? `${c.reps} reps/ex` : 'reps'
       return c.work_s ? `${c.work_s}s/ex` : 'timed'
+    case 'rest':
+      return c.rest_s ? `${c.rest_s}s` : ''
   }
 }
 

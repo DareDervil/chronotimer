@@ -1,5 +1,5 @@
 export type PhaseType = 'warmup' | 'main' | 'cooldown'
-export type BlockType = 'hiit' | 'amrap' | 'emom' | 'tabata' | 'circuit' | 'straight_sets' | 'free'
+export type BlockType = 'hiit' | 'amrap' | 'emom' | 'tabata' | 'circuit' | 'straight_sets' | 'free' | 'rest'
 export type ExerciseCategory = 'warmup' | 'cardio' | 'strength' | 'mobility'
 
 // wger Latin muscle names stored in the DB

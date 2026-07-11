@@ -25,6 +25,7 @@ const BLOCK_TYPES: { value: BlockType; label: string; description: string }[] = 
   { value: 'circuit', label: 'Circuit', description: 'Sequential exercises with rest' },
   { value: 'straight_sets', label: 'Straight Sets', description: 'X reps × N sets with rest' },
   { value: 'free', label: 'Free-form', description: 'Exercises by time or reps, global or per exercise' },
+  { value: 'rest', label: 'Rest', description: 'Fixed rest period, no exercises' },
 ]
 
 const TABATA_DEFAULTS: BlockConfig = { work_s: 20, rest_s: 10, rounds: 8 }
@@ -38,6 +39,7 @@ function defaultConfig(type: BlockType): BlockConfig {
     case 'circuit': return { rounds: 3, rest_between_exercises_s: 30, rest_between_rounds_s: 60 }
     case 'straight_sets': return { sets: 3, rest_between_sets_s: 60 }
     case 'free': return { mode: 'time', work_s: 30 }
+    case 'rest': return { rest_s: 60 }
   }
 }
 
@@ -325,6 +327,13 @@ export function BlockConfigDialog({ block, onSave }: BlockConfigDialogProps) {
                 )}
               </div>
             </>
+          )}
+          {selectedType === 'rest' && (
+            <ConfigField
+              label="Duration (seconds)"
+              value={config.rest_s ?? ''}
+              onChange={(v) => setNum('rest_s', v)}
+            />
           )}
         </div>
 
