@@ -53,6 +53,7 @@ const PHASE_LABELS: Record<string, string> = {
 const BLOCK_LABELS: Record<string, string> = {
   hiit: 'HIIT', tabata: 'Tabata', amrap: 'AMRAP',
   emom: 'EMOM', circuit: 'Circuit', straight_sets: 'Straight Sets', free: 'Free-form',
+  rest: 'Rest',
 }
 
 const BLOCK_BADGE: Record<string, string> = {
@@ -63,6 +64,7 @@ const BLOCK_BADGE: Record<string, string> = {
   circuit:       'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
   straight_sets: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
   free:          'bg-sky-500/15 text-sky-400 border-sky-500/30',
+  rest:          'bg-slate-500/15 text-slate-400 border-slate-500/30',
 }
 
 // ─── Session detail dialog ────────────────────────────────────────────────────
