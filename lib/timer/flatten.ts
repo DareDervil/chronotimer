@@ -191,6 +191,9 @@ export function flattenWorkout(workout: WorkoutWithStructure): TimerStep[] {
             steps.push(restStep('Rest', exName, restDuration, pLabel, bType))
           }
         }
+      } else if (bType === 'rest') {
+        const restS = cfg.rest_s ?? 60
+        steps.push(restStep('Rest', '', restS, pLabel, bType))
       }
     }
   }
