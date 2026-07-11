@@ -52,7 +52,7 @@ function calcBlockDuration(block: BuilderBlock): number | null {
       return workTotal + restTotal
     }
     case 'rest':
-      return c.rest_s ?? null
+      return c.rest_s && c.rest_s > 0 ? c.rest_s : 60
   }
 }
 
