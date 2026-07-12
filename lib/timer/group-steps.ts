@@ -91,7 +91,7 @@ export function buildProgramRows(steps: TimerStep[], stepIndex: number): Program
       const meta = BLOCK_META[step.blockType]
       rows.push({
         kind: 'divider',
-        key: `divider-${step.id}`,
+        key: `divider-${step.blockId}`,
         label: `${step.phaseLabel} · ${meta?.label ?? step.blockType}`,
       })
       prevBlockId = step.blockId
