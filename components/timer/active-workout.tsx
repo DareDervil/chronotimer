@@ -96,13 +96,18 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
 
   // Countdown: speak "Three", "Two", "One"
   const prevCountdown = useRef<number | null>(null)
+  const prevStatus = useRef<string | null>(null)
   useEffect(() => {
+    if (status === 'countdown' && prevStatus.current !== 'countdown') {
+      speak('Three')
+    }
+    prevStatus.current = status
     if (prevCountdown.current === null) { prevCountdown.current = countdown; return }
     if (prevCountdown.current === countdown) return
     prevCountdown.current = countdown
-    const words: Record<number, string> = { 3: 'Three', 2: 'Two', 1: 'One' }
+    const words: Record<number, string> = { 2: 'Two', 1: 'One' }
     if (words[countdown]) speak(words[countdown])
-  }, [countdown])
+  }, [countdown, status])
 
   // ARIA live announcements for screen readers
   const prevStepForAria = useRef<number | null>(null)
@@ -116,10 +121,13 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
     setAnnouncement(msg)
   }, [stepIndex, steps])
 
+  const goFired = useRef(false)
   useEffect(() => {
     if (countdown > 0) {
+      goFired.current = false
       setAnnouncement(`Starting in ${countdown}`)
-    } else if (countdown === 0 && status === 'running') {
+    } else if (countdown === 0 && status === 'running' && !goFired.current) {
+      goFired.current = true
       setAnnouncement('Go!')
       beep.bell(3)
       speak('Go!')
