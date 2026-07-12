@@ -315,7 +315,7 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
               {currentStep?.exerciseName ?? ''}
               {nextExerciseLabel && (
-                <span className="text-lg sm:text-xl md:text-2xl font-normal text-muted-foreground">
+                <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-normal text-muted-foreground">
                   {' '}→ {nextExerciseLabel}
                 </span>
               )}
