@@ -11,6 +11,7 @@ import { beep } from '@/lib/audio/beeps'
 import { speak } from '@/lib/audio/voice'
 import { TimerRing } from './timer-ring'
 import { UpcomingList } from './upcoming-list'
+import { FullProgramList } from './full-program-list'
 import { WorkoutComplete } from './workout-complete'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import type { WorkoutWithStructure } from '@/types/database'
@@ -334,8 +335,8 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
           )}
         </div>
 
-        <aside className="hidden md:block w-[220px] lg:w-[260px] shrink-0 border-l border-border overflow-y-auto px-3 py-4">
-          <UpcomingList steps={steps} stepIndex={stepIndex} />
+        <aside className="hidden md:block w-[320px] lg:w-[380px] shrink-0 border-l border-border overflow-y-auto px-3 py-4">
+          <FullProgramList steps={steps} stepIndex={stepIndex} />
         </aside>
       </div>
 
