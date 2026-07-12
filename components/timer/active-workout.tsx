@@ -164,12 +164,14 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
     return () => { lock?.release().catch(() => {}) }
   }, [status])
 
-  // Last-3-seconds tick beep + end chime (suppressed for rep-based steps)
+  // Halfway callout (suppressed for rep-based and very short steps)
   useEffect(() => {
     const step = steps[stepIndex]
     if (!step || status !== 'running' || step.isReps) return
-    if (timeLeft === 1) beep.end()
-    else if (timeLeft <= 3 && timeLeft > 1) beep.tick()
+    if (step.duration < 10) return
+    if (timeLeft === Math.floor(step.duration / 2)) {
+      speak(step.isRest ? 'Get ready' : 'Halfway!')
+    }
   }, [timeLeft, stepIndex, steps, status])
 
   function handleBack() {
