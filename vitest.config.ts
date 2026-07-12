@@ -8,6 +8,6 @@ export default defineConfig({
     },
   },
   test: {
-    include: ['lib/timer/**/*.test.ts', 'lib/validation/**/*.test.ts'],
+    include: ['lib/timer/**/*.test.ts', 'lib/validation/**/*.test.ts', 'lib/block-colors.test.ts'],
   },
 })
