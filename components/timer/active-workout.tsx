@@ -78,7 +78,7 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
     return () => clearInterval(id)
   }, [status, tick])
 
-  // Fire beeps on step change (skip initial mount)
+  // Fire bell + voice on step change (skip initial mount)
   const prevStepIndex = useRef<number | null>(null)
   useEffect(() => {
     if (prevStepIndex.current === null) { prevStepIndex.current = stepIndex; return }
@@ -86,8 +86,12 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
     prevStepIndex.current = stepIndex
     const step = steps[stepIndex]
     if (!step) return
-    if (step.isRest) beep.rest()
-    else beep.go()
+    if (step.isRest) {
+      beep.bell(1)
+    } else {
+      beep.bell(3)
+      speak('Go!')
+    }
   }, [stepIndex, steps])
 
   // Countdown: speak "Three", "Two", "One"
