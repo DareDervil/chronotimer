@@ -2,6 +2,7 @@
 
 import type { BuilderBlock, BuilderPhase } from '@/types/builder'
 import { cn } from '@/lib/utils'
+import { BLOCK_META } from '@/lib/block-colors'
 
 // ─── Duration calculation ──────────────────────────────────────────────────────
 
@@ -66,18 +67,6 @@ function fmtDuration(seconds: number): string {
   return `${s}s`
 }
 
-// ─── Colors & labels per block type ───────────────────────────────────────────
-
-const BLOCK_META: Record<string, { bar: string; badge: string; text: string; label: string }> = {
-  hiit:          { bar: 'bg-red-500',     badge: 'bg-red-500/15 text-red-400 border-red-500/30',              text: 'text-red-400',     label: 'HIIT' },
-  tabata:        { bar: 'bg-orange-500',  badge: 'bg-orange-500/15 text-orange-400 border-orange-500/30',     text: 'text-orange-400',  label: 'Tabata' },
-  amrap:         { bar: 'bg-blue-500',    badge: 'bg-blue-500/15 text-blue-400 border-blue-500/30',           text: 'text-blue-400',    label: 'AMRAP' },
-  emom:          { bar: 'bg-purple-500',  badge: 'bg-purple-500/15 text-purple-400 border-purple-500/30',     text: 'text-purple-400',  label: 'EMOM' },
-  circuit:       { bar: 'bg-emerald-500', badge: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',  text: 'text-emerald-400', label: 'Circuit' },
-  straight_sets: { bar: 'bg-amber-500',   badge: 'bg-amber-500/15 text-amber-400 border-amber-500/30',        text: 'text-amber-400',   label: 'Sets' },
-  free:          { bar: 'bg-sky-500',     badge: 'bg-sky-500/15 text-sky-400 border-sky-500/30',              text: 'text-sky-400',     label: 'Free-form' },
-  rest:          { bar: 'bg-slate-500',   badge: 'bg-slate-500/15 text-slate-400 border-slate-500/30',        text: 'text-slate-400',   label: 'Rest' },
-}
 
 function blockSummary(block: BuilderBlock): string {
   const c = block.config
