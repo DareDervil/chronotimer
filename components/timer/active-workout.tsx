@@ -79,18 +79,21 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
     return () => clearInterval(id)
   }, [status, tick])
 
-  // Fire bell on step change (skip initial mount)
+  // Fire bell on step change, and when the first exercise kicks off after the countdown
   const prevStepIndex = useRef<number | null>(null)
+  const prevStatusForBell = useRef<string | null>(null)
   useEffect(() => {
-    if (prevStepIndex.current === null) { prevStepIndex.current = stepIndex; return }
-    if (prevStepIndex.current === stepIndex) return
+    const startedFirstExercise = status === 'running' && prevStatusForBell.current === 'countdown'
+    prevStatusForBell.current = status
+
+    const stepChanged = prevStepIndex.current !== null && prevStepIndex.current !== stepIndex
     prevStepIndex.current = stepIndex
+
+    if (!startedFirstExercise && !stepChanged) return
     const step = steps[stepIndex]
     if (!step) return
-    if (!step.isRest) {
-      beep.exerciseStart()
-    }
-  }, [stepIndex, steps])
+    beep.exerciseStart()
+  }, [stepIndex, steps, status])
 
   // Countdown: voice "Three", "Two", "One"
   const prevCountdown = useRef<number | null>(null)
