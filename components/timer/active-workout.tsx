@@ -78,23 +78,16 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
     return () => clearInterval(id)
   }, [status, tick])
 
-  // Fire bell + voice on step change (skip initial mount)
+  // Fire bell on step change (skip initial mount)
   const prevStepIndex = useRef<number | null>(null)
   useEffect(() => {
     if (prevStepIndex.current === null) { prevStepIndex.current = stepIndex; return }
     if (prevStepIndex.current === stepIndex) return
-    const prevStep = steps[prevStepIndex.current]
     prevStepIndex.current = stepIndex
     const step = steps[stepIndex]
     if (!step) return
-    // An exercise just ended if the step we left was work — regardless of what
-    // comes next (rest, or straight into another exercise with no rest between).
-    if (prevStep && !prevStep.isRest) {
-      beep.exerciseEnd()
-    }
     if (!step.isRest) {
-      beep.bell(3)
-      beep.go()
+      beep.exerciseStart()
     }
   }, [stepIndex, steps])
 
@@ -132,8 +125,6 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
     } else if (countdown === 0 && status === 'running' && !goFired.current) {
       goFired.current = true
       setAnnouncement('Go!')
-      beep.bell(3)
-      beep.go()
     }
   }, [countdown, status])
 
