@@ -8,6 +8,7 @@ import { ChevronUp, X } from 'lucide-react'
 import { useWorkoutTimerStore, readSnapshot, type TimerSnapshot } from '@/lib/timer/store'
 import { groupUpcomingSteps } from '@/lib/timer/group-steps'
 import { beep } from '@/lib/audio/beeps'
+import { speak } from '@/lib/audio/voice'
 import { TimerRing } from './timer-ring'
 import { UpcomingList } from './upcoming-list'
 import { WorkoutComplete } from './workout-complete'
@@ -89,13 +90,14 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
     else beep.go()
   }, [stepIndex, steps])
 
-  // Countdown tick beeps
+  // Countdown: speak "Three", "Two", "One"
   const prevCountdown = useRef<number | null>(null)
   useEffect(() => {
     if (prevCountdown.current === null) { prevCountdown.current = countdown; return }
     if (prevCountdown.current === countdown) return
     prevCountdown.current = countdown
-    if (countdown > 0) beep.tick()
+    const words: Record<number, string> = { 3: 'Three', 2: 'Two', 1: 'One' }
+    if (words[countdown]) speak(words[countdown])
   }, [countdown])
 
   // ARIA live announcements for screen readers
@@ -111,8 +113,13 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
   }, [stepIndex, steps])
 
   useEffect(() => {
-    if (countdown > 0) setAnnouncement(`Starting in ${countdown}`)
-    else if (countdown === 0 && status === 'running') setAnnouncement('Go!')
+    if (countdown > 0) {
+      setAnnouncement(`Starting in ${countdown}`)
+    } else if (countdown === 0 && status === 'running') {
+      setAnnouncement('Go!')
+      beep.bell(3)
+      speak('Go!')
+    }
   }, [countdown, status])
 
   // Keyboard shortcuts (desktop)
