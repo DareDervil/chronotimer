@@ -1,9 +1,12 @@
 'use client'
 
+import { BLOCK_META, FALLBACK_STROKE_COLOR } from '@/lib/block-colors'
+
 interface TimerRingProps {
   duration: number
   timeLeft: number
   isRest: boolean
+  blockType: string
   isReps?: boolean
   repsDisplay?: string | null
 }
@@ -19,11 +22,12 @@ function formatTime(seconds: number): string {
 
 const RADIUS = 80
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS // ~502.65
+const REST_STROKE_COLOR = 'hsl(215,70%,60%)'
 
-export function TimerRing({ duration, timeLeft, isRest, isReps = false, repsDisplay }: TimerRingProps) {
+export function TimerRing({ duration, timeLeft, isRest, blockType, isReps = false, repsDisplay }: TimerRingProps) {
   const progress = isReps ? 1 : (duration > 0 ? timeLeft / duration : 0)
   const dashOffset = CIRCUMFERENCE * (1 - progress)
-  const strokeColor = isRest ? 'hsl(215,70%,60%)' : 'hsl(25,95%,55%)'
+  const strokeColor = isRest ? REST_STROKE_COLOR : (BLOCK_META[blockType]?.stroke ?? FALLBACK_STROKE_COLOR)
 
   return (
     <div className="relative w-60 h-60 sm:w-72 sm:h-72 md:w-80 md:h-80 lg:w-96 lg:h-96">

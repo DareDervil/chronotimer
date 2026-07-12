@@ -289,6 +289,7 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
           duration={currentStep?.duration ?? 0}
           timeLeft={timeLeft}
           isRest={currentStep?.isRest ?? false}
+          blockType={currentStep?.blockType ?? 'free'}
           isReps={currentStep?.isReps ?? false}
           repsDisplay={currentStep?.repsDisplay}
         />
