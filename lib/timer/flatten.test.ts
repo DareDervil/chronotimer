@@ -154,3 +154,27 @@ describe('flattenWorkout — blockType on every step', () => {
     ])
   })
 })
+
+describe('flattenWorkout — blockId and bexId', () => {
+  it('tags every step with its source blockId', () => {
+    const w = workout([
+      { block_type: 'hiit', config: { rounds: 1, work_s: 20, rest_s: 10 }, exerciseNames: ['Squat', 'Push-up'] },
+      { block_type: 'amrap', config: { total_duration_s: 300 }, exerciseNames: ['Burpee'] },
+    ])
+    const steps = flattenWorkout(w)
+
+    // hiit block (b0): work(Squat), rest, work(Push-up) — rest_s>0, rounds=1 so no trailing rest after last exercise
+    // amrap block (b1): one joined step
+    expect(steps.map((s) => s.blockId)).toEqual(['b0', 'b0', 'b0', 'b1'])
+  })
+
+  it('tags work steps with their source bexId; rest steps and AMRAP steps get null', () => {
+    const w = workout([
+      { block_type: 'hiit', config: { rounds: 1, work_s: 20, rest_s: 10 }, exerciseNames: ['Squat', 'Push-up'] },
+      { block_type: 'amrap', config: { total_duration_s: 300 }, exerciseNames: ['Burpee'] },
+    ])
+    const steps = flattenWorkout(w)
+
+    expect(steps.map((s) => s.bexId)).toEqual(['e0-0', null, 'e0-1', null])
+  })
+})

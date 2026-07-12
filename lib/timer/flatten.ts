@@ -11,6 +11,8 @@ export interface TimerStep {
   repsDisplay: string | null  // e.g. "10 reps" — shown in the ring center
   phaseLabel: string
   blockType: string
+  blockId: string
+  bexId: string | null  // source BlockExercise id; null for AMRAP (joins multiple exercises into one step) and for rest steps
 }
 
 function phaseLabel(phaseType: PhaseType): string {
@@ -36,6 +38,8 @@ function workStep(
   duration: number,
   pLabel: string,
   bType: string,
+  blockId: string,
+  bexId: string | null,
   repsDisplay: string | null = null,
 ): TimerStep {
   return {
@@ -49,6 +53,8 @@ function workStep(
     repsDisplay,
     phaseLabel: pLabel,
     blockType: bType,
+    blockId,
+    bexId,
   }
 }
 
@@ -58,6 +64,7 @@ function restStep(
   duration: number,
   pLabel: string,
   bType: string,
+  blockId: string,
 ): TimerStep {
   return {
     id: nextId(),
@@ -70,6 +77,8 @@ function restStep(
     repsDisplay: null,
     phaseLabel: pLabel,
     blockType: bType,
+    blockId,
+    bexId: null,
   }
 }
 
@@ -95,13 +104,12 @@ export function flattenWorkout(workout: WorkoutWithStructure): TimerStep[] {
           for (let ei = 0; ei < exercises.length; ei++) {
             const ex = exercises[ei]
             const exName = ex.exercise?.name ?? 'Exercise'
-            steps.push(workStep(exName, roundLabel, workS, pLabel, bType))
+            steps.push(workStep(exName, roundLabel, workS, pLabel, bType, block.id, ex.id))
 
-            // Skip REST after last exercise of last round
             const isLastRound = r === rounds - 1
             const isLastExercise = ei === exercises.length - 1
             if (!(isLastRound && isLastExercise) && restS > 0) {
-              steps.push(restStep('Rest', roundLabel, restS, pLabel, bType))
+              steps.push(restStep('Rest', roundLabel, restS, pLabel, bType, block.id))
             }
           }
         }
@@ -115,17 +123,16 @@ export function flattenWorkout(workout: WorkoutWithStructure): TimerStep[] {
           for (let ei = 0; ei < exercises.length; ei++) {
             const ex = exercises[ei]
             const exName = ex.exercise?.name ?? 'Exercise'
-              steps.push(workStep(exName, roundLabel, ex.duration_s ?? cfg.work_s ?? 0, pLabel, bType))
+            steps.push(workStep(exName, roundLabel, ex.duration_s ?? cfg.work_s ?? 0, pLabel, bType, block.id, ex.id))
 
             const isLastExercise = ei === exercises.length - 1
             if (!isLastExercise && restBetweenEx > 0) {
-              steps.push(restStep('Rest', roundLabel, restBetweenEx, pLabel, bType))
+              steps.push(restStep('Rest', roundLabel, restBetweenEx, pLabel, bType, block.id))
             }
           }
-          // After each full round except last: rest between rounds
           const isLastRound = r === rounds - 1
           if (!isLastRound && restBetweenRounds > 0) {
-            steps.push(restStep('Rest Between Rounds', `Round ${r + 1} complete`, restBetweenRounds, pLabel, bType))
+            steps.push(restStep('Rest Between Rounds', `Round ${r + 1} complete`, restBetweenRounds, pLabel, bType, block.id))
           }
         }
       } else if (bType === 'straight_sets') {
@@ -141,18 +148,16 @@ export function flattenWorkout(workout: WorkoutWithStructure): TimerStep[] {
           for (let s = 0; s < exSets; s++) {
             const setLabel = `Set ${s + 1} of ${exSets}`
             const repsDisplay = ex.reps ? `${ex.reps} reps` : null
-            steps.push(workStep(exName, setLabel, STRAIGHT_SETS_WORK_S, pLabel, bType, repsDisplay))
+            steps.push(workStep(exName, setLabel, STRAIGHT_SETS_WORK_S, pLabel, bType, block.id, ex.id, repsDisplay))
 
             const isLastSet = s === exSets - 1
             if (isLastSet) {
-              // Transition rest between exercises (rest_after_s); skip after last exercise
               if (!isLastExercise && (ex.rest_after_s ?? 0) > 0) {
-                steps.push(restStep('Rest', `${exName} complete`, ex.rest_after_s, pLabel, bType))
+                steps.push(restStep('Rest', `${exName} complete`, ex.rest_after_s, pLabel, bType, block.id))
               }
             } else {
-              // Inter-set rest (rest_between_sets_s)
               if (restBetweenSets > 0) {
-                steps.push(restStep('Rest', setLabel, restBetweenSets, pLabel, bType))
+                steps.push(restStep('Rest', setLabel, restBetweenSets, pLabel, bType, block.id))
               }
             }
           }
@@ -166,12 +171,12 @@ export function flattenWorkout(workout: WorkoutWithStructure): TimerStep[] {
           const ex = exercises[c % exercises.length]
           const exName = ex.exercise?.name ?? 'Exercise'
           const label = `Minute ${c + 1} of ${cycles}`
-          steps.push(workStep(exName, label, intervalS, pLabel, bType))
+          steps.push(workStep(exName, label, intervalS, pLabel, bType, block.id, ex.id))
         }
       } else if (bType === 'amrap') {
         const totalS = cfg.total_duration_s ?? 600
         const exerciseNames = exercises.map((e) => e.exercise?.name ?? 'Exercise').join(', ')
-        steps.push(workStep(exerciseNames, 'AMRAP', totalS, pLabel, bType))
+        steps.push(workStep(exerciseNames, 'AMRAP', totalS, pLabel, bType, block.id, null))
       } else if (bType === 'free') {
         const mode = cfg.mode ?? 'time'
         for (let ei = 0; ei < exercises.length; ei++) {
@@ -180,20 +185,20 @@ export function flattenWorkout(workout: WorkoutWithStructure): TimerStep[] {
           if (mode === 'reps') {
             const reps = ex.reps ?? cfg.reps
             const repsDisplay = reps ? `${reps} reps` : 'Complete reps'
-            steps.push(workStep(exName, repsDisplay, STRAIGHT_SETS_WORK_S, pLabel, bType, repsDisplay))
+            steps.push(workStep(exName, repsDisplay, STRAIGHT_SETS_WORK_S, pLabel, bType, block.id, ex.id, repsDisplay))
           } else {
             const duration = ex.duration_s ?? cfg.work_s ?? DEFAULT_WORK_S
-            steps.push(workStep(exName, 'Free', duration, pLabel, bType))
+            steps.push(workStep(exName, 'Free', duration, pLabel, bType, block.id, ex.id))
           }
           const isLastExercise = ei === exercises.length - 1
           const restDuration = ex.rest_after_s > 0 ? ex.rest_after_s : (cfg.rest_between_exercises_s ?? 0)
           if (!isLastExercise && restDuration > 0) {
-            steps.push(restStep('Rest', exName, restDuration, pLabel, bType))
+            steps.push(restStep('Rest', exName, restDuration, pLabel, bType, block.id))
           }
         }
       } else if (bType === 'rest') {
         const restS = cfg.rest_s && cfg.rest_s > 0 ? cfg.rest_s : 60
-        steps.push(restStep('Rest', '', restS, pLabel, bType))
+        steps.push(restStep('Rest', '', restS, pLabel, bType, block.id))
       }
     }
   }
