@@ -139,3 +139,18 @@ describe('flattenWorkout — rest block', () => {
     expect(steps[0].duration).toBe(90)
   })
 })
+
+describe('flattenWorkout — blockType on every step', () => {
+  it('tags each step with the block_type it came from, for both work and rest steps', () => {
+    const w = workout([
+      { block_type: 'hiit', config: { rounds: 1, work_s: 20, rest_s: 10 }, exerciseNames: ['Squat', 'Push-up'] },
+      { block_type: 'amrap', config: { total_duration_s: 300 }, exerciseNames: ['Burpee'] },
+    ])
+    const steps = flattenWorkout(w)
+
+    expect(steps.map((s) => s.blockType)).toEqual([
+      'hiit', 'hiit', 'hiit', // work, rest, work (last step of block has no trailing rest)
+      'amrap',
+    ])
+  })
+})
