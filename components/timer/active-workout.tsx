@@ -3,9 +3,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
+import { Drawer } from '@/components/ui/drawer'
+import { ChevronUp, X } from 'lucide-react'
 import { useWorkoutTimerStore, readSnapshot, type TimerSnapshot } from '@/lib/timer/store'
+import { groupUpcomingSteps } from '@/lib/timer/group-steps'
 import { beep } from '@/lib/audio/beeps'
 import { TimerRing } from './timer-ring'
+import { UpcomingList } from './upcoming-list'
 import { WorkoutComplete } from './workout-complete'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import type { WorkoutWithStructure } from '@/types/database'
@@ -39,6 +43,7 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
   const clearSnapshot = useWorkoutTimerStore((s) => s.clearSnapshot)
 
   const [resumeSnap, setResumeSnap] = useState<TimerSnapshot | null>(null)
+  const [upcomingOpen, setUpcomingOpen] = useState(false)
   const [exitOpen, setExitOpen] = useState(false)
   const [announcement, setAnnouncement] = useState('')
 
@@ -185,7 +190,8 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
   }
 
   const currentStep = steps[stepIndex]
-  const nextStep    = steps[stepIndex + 1]
+  const upcomingGroups = groupUpcomingSteps(steps, stepIndex)
+  const nextUpGroup = upcomingGroups.find((g) => !g.isCurrent) ?? null
 
   // ── Resume prompt ─────────────────────────────────────────────────────────
 
@@ -274,35 +280,42 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
       </div>
 
       {/* Main content */}
-      <div className="flex flex-col items-center justify-center flex-1 gap-6 px-4 py-8">
-        <div className="text-center space-y-1">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
-            {currentStep?.exerciseName ?? ''}
-          </h2>
-          <p className="text-muted-foreground">{currentStep?.label ?? ''}</p>
-          {currentStep?.isRest && (
-            <p className="text-sm font-medium text-blue-400 uppercase tracking-wider">Rest</p>
+      <div className="flex flex-1 items-stretch">
+        <div className="flex flex-col items-center justify-center flex-1 gap-6 px-4 py-8">
+          <div className="text-center space-y-1">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
+              {currentStep?.exerciseName ?? ''}
+            </h2>
+            <p className="text-muted-foreground">{currentStep?.label ?? ''}</p>
+            {currentStep?.isRest && (
+              <p className="text-sm font-medium text-blue-400 uppercase tracking-wider">Rest</p>
+            )}
+          </div>
+
+          <TimerRing
+            duration={currentStep?.duration ?? 0}
+            timeLeft={timeLeft}
+            isRest={currentStep?.isRest ?? false}
+            blockType={currentStep?.blockType ?? 'free'}
+            isReps={currentStep?.isReps ?? false}
+            repsDisplay={currentStep?.repsDisplay}
+          />
+
+          {nextUpGroup && (
+            <button
+              onClick={() => setUpcomingOpen(true)}
+              className="md:hidden flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Up next:{' '}
+              <span className="font-medium text-foreground">{nextUpGroup.exerciseName}</span>
+              <ChevronUp className="h-3.5 w-3.5" />
+            </button>
           )}
         </div>
 
-        <TimerRing
-          duration={currentStep?.duration ?? 0}
-          timeLeft={timeLeft}
-          isRest={currentStep?.isRest ?? false}
-          blockType={currentStep?.blockType ?? 'free'}
-          isReps={currentStep?.isReps ?? false}
-          repsDisplay={currentStep?.repsDisplay}
-        />
-
-        {nextStep && (
-          <p className="text-sm sm:text-base md:text-lg lg:text-xl text-muted-foreground">
-            Next:{' '}
-            <span className="font-medium text-foreground">
-              {nextStep.exerciseName}
-              {nextStep.isRest ? ' (Rest)' : ''}
-            </span>
-          </p>
-        )}
+        <aside className="hidden md:block w-[220px] lg:w-[260px] shrink-0 border-l border-border overflow-y-auto px-3 py-4">
+          <UpcomingList steps={steps} stepIndex={stepIndex} />
+        </aside>
       </div>
 
       {/* Bottom controls */}
@@ -395,6 +408,31 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Upcoming exercises — mobile drawer */}
+      <Drawer.Root open={upcomingOpen} onOpenChange={setUpcomingOpen}>
+        <Drawer.Portal>
+          <Drawer.Overlay className="fixed inset-0 z-40 bg-black/50" />
+          <Drawer.Content
+            className="fixed bottom-0 inset-x-0 z-50 flex flex-col bg-popover rounded-t-2xl border-t border-border focus:outline-none max-h-[70dvh]"
+          >
+            <Drawer.Title className="sr-only">Upcoming exercises</Drawer.Title>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+              <span className="font-semibold text-sm">Up next</span>
+              <button
+                onClick={() => setUpcomingOpen(false)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="overflow-y-auto px-3 py-3">
+              <UpcomingList steps={steps} stepIndex={stepIndex} />
+            </div>
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
 
       {/* Countdown overlay */}
       <AnimatePresence>
