@@ -7,6 +7,7 @@ import { Drawer } from '@/components/ui/drawer'
 import { ChevronUp, X } from 'lucide-react'
 import { useWorkoutTimerStore, readSnapshot, type TimerSnapshot } from '@/lib/timer/store'
 import { groupUpcomingSteps } from '@/lib/timer/group-steps'
+import { getNextExerciseLabel } from '@/lib/timer/next-step-label'
 import { beep } from '@/lib/audio/beeps'
 import { TimerRing } from './timer-ring'
 import { UpcomingList } from './upcoming-list'
@@ -216,6 +217,7 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
   const currentStep = steps[stepIndex]
   const upcomingGroups = groupUpcomingSteps(steps, stepIndex)
   const nextUpGroup = upcomingGroups.find((g) => !g.isCurrent) ?? null
+  const nextExerciseLabel = currentStep ? getNextExerciseLabel(steps, stepIndex) : null
 
   // ── Resume prompt ─────────────────────────────────────────────────────────
 
@@ -309,6 +311,11 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
           <div className="text-center space-y-1">
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
               {currentStep?.exerciseName ?? ''}
+              {nextExerciseLabel && (
+                <span className="text-lg sm:text-xl md:text-2xl font-normal text-muted-foreground">
+                  {' '}→ {nextExerciseLabel}
+                </span>
+              )}
             </h2>
             <p className="text-muted-foreground">{currentStep?.label ?? ''}</p>
             {currentStep?.isRest && (
