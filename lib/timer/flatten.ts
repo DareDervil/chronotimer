@@ -31,6 +31,9 @@ function nextId(): string {
 
 const DEFAULT_WORK_S = 30
 const STRAIGHT_SETS_WORK_S = 5 * 60 // rep-based: user skips when done
+// Floor so every timed step has room for the final-3-seconds tick cue without
+// colliding with the step-start sound (see beep.tick() in lib/audio/beeps.ts).
+const MIN_TICKABLE_S = 4
 
 function workStep(
   exerciseName: string,
@@ -47,7 +50,7 @@ function workStep(
     type: 'work',
     exerciseName,
     label,
-    duration: duration > 0 ? duration : DEFAULT_WORK_S,
+    duration: Math.max(duration > 0 ? duration : DEFAULT_WORK_S, MIN_TICKABLE_S),
     isRest: false,
     isReps: repsDisplay !== null,
     repsDisplay,
@@ -71,7 +74,7 @@ function restStep(
     type: 'rest',
     exerciseName,
     label,
-    duration,
+    duration: Math.max(duration, MIN_TICKABLE_S),
     isRest: true,
     isReps: false,
     repsDisplay: null,

@@ -30,34 +30,72 @@ function ring() {
   })
 }
 
+let doneAudio: HTMLAudioElement | null = null
+let goAudio: HTMLAudioElement | null = null
+let exerciseEndAudio: HTMLAudioElement | null = null
+let halfwayAudio: HTMLAudioElement | null = null
+let tickAudio: HTMLAudioElement | null = null
+const countAudio: Partial<Record<3 | 2 | 1, HTMLAudioElement>> = {}
+const countSrc: Record<3 | 2 | 1, string> = {
+  3: '/sounds/count-three.mp3',
+  2: '/sounds/count-two.mp3',
+  1: '/sounds/count-one.mp3',
+}
+
 export const beep = {
-  /** Completion fanfare */
+  /** Completion fanfare ("Level Up 03" by Universfield, Pixabay Content License) */
   done() {
-    const ctx = getAudioContext()
-    const playTone = (frequency: number, duration: number, gain = 0.4) => {
-      const oscillator = ctx.createOscillator()
-      const gainNode = ctx.createGain()
-
-      oscillator.connect(gainNode)
-      gainNode.connect(ctx.destination)
-
-      oscillator.type = 'sine'
-      oscillator.frequency.setValueAtTime(frequency, ctx.currentTime)
-
-      gainNode.gain.setValueAtTime(gain, ctx.currentTime)
-      gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration)
-
-      oscillator.start(ctx.currentTime)
-      oscillator.stop(ctx.currentTime + duration)
+    if (!doneAudio) {
+      doneAudio = new Audio('/sounds/workout-complete.mp3')
     }
-    playTone(523, 0.15)
-    setTimeout(() => playTone(659, 0.15), 180)
-    setTimeout(() => playTone(784, 0.3), 360)
+    doneAudio.currentTime = 0
+    doneAudio.play().catch(() => {})
   },
-  /** One or three bell rings, ~220ms apart — 1 for entering rest, 3 for starting work */
-  bell(times: 1 | 3) {
+  /** Three bell rings, ~220ms apart — for starting work */
+  bell(times: 3) {
     for (let i = 0; i < times; i++) {
       setTimeout(ring, i * 220)
     }
+  },
+  /** Exercise-end cue ("Opening Bell" by u_7xr5ffk4oq, Pixabay Content License) */
+  exerciseEnd() {
+    if (!exerciseEndAudio) {
+      exerciseEndAudio = new Audio('/sounds/exercise-end-bell.mp3')
+    }
+    exerciseEndAudio.currentTime = 0
+    exerciseEndAudio.play().catch(() => {})
+  },
+  /** "Go!" cue — boxing bell, first second only ("Boxing Bell" by Universfield, Pixabay Content License) */
+  go() {
+    if (!goAudio) {
+      goAudio = new Audio('/sounds/go-bell.mp3')
+    }
+    goAudio.currentTime = 0
+    goAudio.play().catch(() => {})
+  },
+  /** Countdown voice — "Three"/"Two"/"One" ("Casual Voice Man Says N" by floraphonic, Pixabay Content License) */
+  count(n: 3 | 2 | 1) {
+    if (!countAudio[n]) {
+      countAudio[n] = new Audio(countSrc[n])
+    }
+    const audio = countAudio[n]!
+    audio.currentTime = 0
+    audio.play().catch(() => {})
+  },
+  /** Halfway-through cue ("Flight announcement tannoy - single tone" by YUSUF_SFX, Pixabay Content License) */
+  halfway() {
+    if (!halfwayAudio) {
+      halfwayAudio = new Audio('/sounds/halfway-tone.mp3')
+    }
+    halfwayAudio.currentTime = 0
+    halfwayAudio.play().catch(() => {})
+  },
+  /** Subtle tick — fired at 3, 2, 1 seconds remaining on any step ("Soft UI Click" by Universfield, Pixabay Content License) */
+  tick() {
+    if (!tickAudio) {
+      tickAudio = new Audio('/sounds/tick.mp3')
+    }
+    tickAudio.currentTime = 0
+    tickAudio.play().catch(() => {})
   },
 }

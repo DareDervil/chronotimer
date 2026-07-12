@@ -8,7 +8,6 @@ import { ChevronUp, X } from 'lucide-react'
 import { useWorkoutTimerStore, readSnapshot, type TimerSnapshot } from '@/lib/timer/store'
 import { groupUpcomingSteps } from '@/lib/timer/group-steps'
 import { beep } from '@/lib/audio/beeps'
-import { speak } from '@/lib/audio/voice'
 import { TimerRing } from './timer-ring'
 import { UpcomingList } from './upcoming-list'
 import { FullProgramList } from './full-program-list'
@@ -84,30 +83,33 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
   useEffect(() => {
     if (prevStepIndex.current === null) { prevStepIndex.current = stepIndex; return }
     if (prevStepIndex.current === stepIndex) return
+    const prevStep = steps[prevStepIndex.current]
     prevStepIndex.current = stepIndex
     const step = steps[stepIndex]
     if (!step) return
-    if (step.isRest) {
-      beep.bell(1)
-    } else {
+    // An exercise just ended if the step we left was work — regardless of what
+    // comes next (rest, or straight into another exercise with no rest between).
+    if (prevStep && !prevStep.isRest) {
+      beep.exerciseEnd()
+    }
+    if (!step.isRest) {
       beep.bell(3)
-      speak('Go!')
+      beep.go()
     }
   }, [stepIndex, steps])
 
-  // Countdown: speak "Three", "Two", "One"
+  // Countdown: voice "Three", "Two", "One"
   const prevCountdown = useRef<number | null>(null)
   const prevStatus = useRef<string | null>(null)
   useEffect(() => {
     if (status === 'countdown' && prevStatus.current !== 'countdown') {
-      speak('Three')
+      beep.count(3)
     }
     prevStatus.current = status
     if (prevCountdown.current === null) { prevCountdown.current = countdown; return }
     if (prevCountdown.current === countdown) return
     prevCountdown.current = countdown
-    const words: Record<number, string> = { 2: 'Two', 1: 'One' }
-    if (words[countdown]) speak(words[countdown])
+    if (countdown === 2 || countdown === 1) beep.count(countdown)
   }, [countdown, status])
 
   // ARIA live announcements for screen readers
@@ -131,7 +133,7 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
       goFired.current = true
       setAnnouncement('Go!')
       beep.bell(3)
-      speak('Go!')
+      beep.go()
     }
   }, [countdown, status])
 
@@ -179,7 +181,16 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
     if (!step || status !== 'running' || step.isReps) return
     if (step.duration < 10) return
     if (timeLeft === Math.floor(step.duration / 2)) {
-      speak(step.isRest ? 'Get ready' : 'Halfway!')
+      beep.halfway()
+    }
+  }, [timeLeft, stepIndex, steps, status])
+
+  // Final-3-seconds tick (work or rest; suppressed for rep-based steps)
+  useEffect(() => {
+    const step = steps[stepIndex]
+    if (!step || status !== 'running' || step.isReps) return
+    if (timeLeft === 3 || timeLeft === 2 || timeLeft === 1) {
+      beep.tick()
     }
   }, [timeLeft, stepIndex, steps, status])
 
