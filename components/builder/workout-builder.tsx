@@ -140,9 +140,7 @@ interface WorkoutBuilderProps {
   guestMode?: boolean
 }
 
-type ActiveDragItem =
-  | { type: 'sidebar'; exercise: Exercise }
-  | { type: 'bex'; bex: BuilderBlockExercise }
+type ActiveDragItem = { type: 'bex'; bex: BuilderBlockExercise }
 
 export function WorkoutBuilder({ exercises, initialWorkout, guestMode = false }: WorkoutBuilderProps) {
   const router = useRouter()
@@ -342,9 +340,7 @@ export function WorkoutBuilder({ exercises, initialWorkout, guestMode = false }:
   function onDragStart({ active }: DragStartEvent) {
     const data = active.data.current
     if (!data) return
-    if (data.type === 'sidebar') {
-      setActiveItem({ type: 'sidebar', exercise: data.exercise })
-    } else if (data.type === 'bex') {
+    if (data.type === 'bex') {
       setActiveItem({ type: 'bex', bex: data.bex })
     }
   }
@@ -356,22 +352,7 @@ export function WorkoutBuilder({ exercises, initialWorkout, guestMode = false }:
     const activeId = active.id as string
     const overId = over.id as string
 
-    if (activeId.startsWith('sidebar:')) {
-      // Dropped from sidebar
-      const exercise: Exercise = active.data.current?.exercise
-      if (!exercise) return
-
-      let targetBlockId: string | null = null
-      if (overId.startsWith('block:')) {
-        targetBlockId = overId.slice('block:'.length)
-      } else if (overId.startsWith('bex:')) {
-        targetBlockId = findBlockIdByBexId(overId.slice('bex:'.length))
-      }
-      if (targetBlockId && findBlockById(targetBlockId)?.block_type !== 'rest') {
-        addExerciseToBlock(targetBlockId, exercise)
-      }
-
-    } else if (activeId.startsWith('bex:')) {
+    if (activeId.startsWith('bex:')) {
       const activeBexId = activeId.slice('bex:'.length)
       const activeBlockId = findBlockIdByBexId(activeBexId)
       if (!activeBlockId) return
@@ -511,14 +492,9 @@ export function WorkoutBuilder({ exercises, initialWorkout, guestMode = false }:
           )}
         </div>
 
-        {/* Body: sidebar + canvas */}
+        {/* Body: canvas */}
         <div className="flex flex-1 overflow-hidden">
-          {/* Exercise sidebar */}
-          <aside className="w-72 shrink-0 border-r overflow-y-auto hidden md:block">
-            <ExerciseSidebar exercises={exercises} />
-          </aside>
-
-          {/* Right column: canvas + timeline */}
+          {/* Canvas + timeline */}
           <div className="flex flex-col flex-1 overflow-hidden">
             {/* Workout canvas */}
             <main className="flex-1 overflow-y-auto p-6 md:pb-6" style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}>
@@ -558,11 +534,6 @@ export function WorkoutBuilder({ exercises, initialWorkout, guestMode = false }:
 
       {/* Drag overlay */}
       <DragOverlay>
-        {activeItem?.type === 'sidebar' && (
-          <div className="rounded-md border bg-card px-3 py-2 text-sm shadow-lg font-medium opacity-90">
-            {activeItem.exercise.name}
-          </div>
-        )}
         {activeItem?.type === 'bex' && (
           <div className="rounded-md border bg-card px-3 py-2 text-sm shadow-lg opacity-90">
             {activeItem.bex.exercise.name}
