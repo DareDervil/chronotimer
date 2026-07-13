@@ -153,8 +153,8 @@ export function WorkoutBuilder({ exercises, initialWorkout, guestMode = false }:
   })
   const [isDirty, setIsDirty] = useState(false)
   const [activeItem, setActiveItem] = useState<ActiveDragItem | null>(null)
-  const [mobileSheetOpen, setMobileSheetOpen] = useState(false)
-  const [mobileAddTarget, setMobileAddTarget] = useState<string | null>(null)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [addTargetBlockId, setAddTargetBlockId] = useState<string | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -427,17 +427,17 @@ export function WorkoutBuilder({ exercises, initialWorkout, guestMode = false }:
     router.push('/try/run')
   }
 
-  // ── Mobile exercise picker ────────────────────────────────────────────────────
+  // ── Exercise picker ─────────────────────────────────────────────────────────
 
-  function handleMobileAdd(blockId: string) {
-    setMobileAddTarget(blockId)
-    setMobileSheetOpen(true)
+  function openPickerForBlock(blockId: string) {
+    setAddTargetBlockId(blockId)
+    setPickerOpen(true)
   }
 
-  function handleMobileTapAdd(exercise: Exercise) {
-    if (!mobileAddTarget) return
-    addExerciseToBlock(mobileAddTarget, exercise)
-    setMobileSheetOpen(false)
+  function handleAddExercise(exercise: Exercise) {
+    if (!addTargetBlockId) return
+    addExerciseToBlock(addTargetBlockId, exercise)
+    setPickerOpen(false)
   }
 
   const hasBlocks = workout.phases.some((p) => p.blocks.length > 0)
@@ -518,7 +518,7 @@ export function WorkoutBuilder({ exercises, initialWorkout, guestMode = false }:
                     onUpdateBlockConfig={updateBlockConfig}
                     onRemoveExercise={removeExerciseFromBlock}
                     onUpdateExercise={updateExerciseConfig}
-                    onMobileAdd={handleMobileAdd}
+                    onAddExercise={openPickerForBlock}
                   />
                 ))}
               </div>
@@ -542,8 +542,8 @@ export function WorkoutBuilder({ exercises, initialWorkout, guestMode = false }:
       </DragOverlay>
     </DndContext>
 
-    {/* Mobile exercise picker — vaul Drawer outside DndContext for reliable cross-browser scroll */}
-    <Drawer.Root open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
+    {/* Exercise picker — vaul Drawer outside DndContext for reliable cross-browser scroll */}
+    <Drawer.Root open={pickerOpen} onOpenChange={setPickerOpen}>
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 z-40 bg-black/50" />
         <Drawer.Content
@@ -554,14 +554,14 @@ export function WorkoutBuilder({ exercises, initialWorkout, guestMode = false }:
           <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
             <span className="font-semibold text-sm">Add exercise</span>
             <button
-              onClick={() => setMobileSheetOpen(false)}
+              onClick={() => setPickerOpen(false)}
               className="text-muted-foreground hover:text-foreground transition-colors"
               aria-label="Close"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
-          <ExerciseSidebar exercises={exercises} onTapAdd={handleMobileTapAdd} />
+          <ExerciseSidebar exercises={exercises} onTapAdd={handleAddExercise} />
         </Drawer.Content>
       </Drawer.Portal>
     </Drawer.Root>
@@ -577,10 +577,10 @@ interface PhaseSectionProps {
   onUpdateBlockConfig: (blockId: string, block_type: BlockType, config: BlockConfig) => void
   onRemoveExercise: (bexId: string) => void
   onUpdateExercise: (bexId: string, updates: Partial<BuilderBlockExercise>) => void
-  onMobileAdd: (blockId: string) => void
+  onAddExercise: (blockId: string) => void
 }
 
-function PhaseSection({ phase, onAddBlock, onRemoveBlock, onUpdateBlockConfig, onRemoveExercise, onUpdateExercise, onMobileAdd }: PhaseSectionProps) {
+function PhaseSection({ phase, onAddBlock, onRemoveBlock, onUpdateBlockConfig, onRemoveExercise, onUpdateExercise, onAddExercise }: PhaseSectionProps) {
   const [collapsed, setCollapsed] = useState(false)
 
   return (
@@ -608,7 +608,7 @@ function PhaseSection({ phase, onAddBlock, onRemoveBlock, onUpdateBlockConfig, o
               onRemoveExercise={onRemoveExercise}
               onRemoveBlock={() => onRemoveBlock(block.id)}
               onUpdateExercise={onUpdateExercise}
-              onMobileAdd={() => onMobileAdd(block.id)}
+              onAddExercise={() => onAddExercise(block.id)}
             />
           ))}
           <Button

@@ -54,10 +54,10 @@ interface BlockCardProps {
   onRemoveExercise: (bexId: string) => void
   onRemoveBlock: () => void
   onUpdateExercise: (bexId: string, updates: Partial<BuilderBlockExercise>) => void
-  onMobileAdd?: () => void
+  onAddExercise?: () => void
 }
 
-export function BlockCard({ block, onUpdateConfig, onRemoveExercise, onRemoveBlock, onUpdateExercise, onMobileAdd }: BlockCardProps) {
+export function BlockCard({ block, onUpdateConfig, onRemoveExercise, onRemoveBlock, onUpdateExercise, onAddExercise }: BlockCardProps) {
   const { setNodeRef, isOver } = useDroppable({ id: `block:${block.id}` })
   const exerciseIds = block.exercises.map((e) => `bex:${e.id}`)
 
@@ -95,10 +95,10 @@ export function BlockCard({ block, onUpdateConfig, onRemoveExercise, onRemoveBlo
           <SortableContext items={exerciseIds} strategy={verticalListSortingStrategy}>
             {block.exercises.length === 0 ? (
               <div className="text-xs text-muted-foreground text-center py-3">
-                {onMobileAdd ? (
+                {onAddExercise ? (
                   <button
                     type="button"
-                    onClick={onMobileAdd}
+                    onClick={onAddExercise}
                     className="text-primary font-medium"
                   >
                     + Add exercise
@@ -126,10 +126,10 @@ export function BlockCard({ block, onUpdateConfig, onRemoveExercise, onRemoveBlo
                     />
                   ))}
                 </div>
-                {onMobileAdd && (
+                {onAddExercise && (
                   <button
                     type="button"
-                    onClick={onMobileAdd}
+                    onClick={onAddExercise}
                     className="mt-1.5 w-full text-xs text-muted-foreground hover:text-primary py-1.5 border border-dashed border-border rounded-md transition-colors"
                   >
                     + Add exercise
