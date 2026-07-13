@@ -47,14 +47,22 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
   const [upcomingOpen, setUpcomingOpen] = useState(false)
   const [exitOpen, setExitOpen] = useState(false)
   const [announcement, setAnnouncement] = useState('')
+  // Fallback only exercised if startedAt is somehow unset when the workout completes.
+  // Captured once via the lazy initializer so render stays pure (a stable value per mount,
+  // not a fresh Date.now() read — and therefore a correct one — on every re-render).
+  const [fallbackStartedAt] = useState(() => Date.now())
 
-  // On mount: load steps, then check for a resumable snapshot (guests always start fresh)
+  // On mount: load steps, then check for a resumable snapshot (guests always start fresh).
+  // This must stay an effect: readSnapshot touches localStorage, which doesn't exist during
+  // SSR — resolving it in a useState initializer instead would make the client's first render
+  // diverge from the server-rendered HTML (a hydration mismatch) whenever a snapshot exists.
   useEffect(() => {
     load(workout, guestMode)
     if (!guestMode) {
       const snap = readSnapshot(workout.id)
       const totalSteps = useWorkoutTimerStore.getState().steps.length
       if (snap && snap.stepIndex < totalSteps) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- see comment above
         setResumeSnap(snap)
         return
       }
@@ -108,28 +116,35 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
     if (countdown === 2 || countdown === 1) beep.count(countdown)
   }, [countdown, status])
 
-  // ARIA live announcements for screen readers
-  const prevStepForAria = useRef<number | null>(null)
-  useEffect(() => {
-    if (prevStepForAria.current === null) { prevStepForAria.current = stepIndex; return }
-    if (prevStepForAria.current === stepIndex) return
-    prevStepForAria.current = stepIndex
-    const step = steps[stepIndex]
-    if (!step) return
-    const msg = step.isRest ? `Rest. ${step.label}` : `${step.exerciseName}. ${step.label}`
-    setAnnouncement(msg)
-  }, [stepIndex, steps])
-
-  const goFired = useRef(false)
-  useEffect(() => {
-    if (countdown > 0) {
-      goFired.current = false
-      setAnnouncement(`Starting in ${countdown}`)
-    } else if (countdown === 0 && status === 'running' && !goFired.current) {
-      goFired.current = true
-      setAnnouncement('Go!')
+  // ARIA live announcements for screen readers.
+  // Derived during render (not in an effect) per React's "adjusting state when a prop
+  // changes" pattern — the announcement is purely a function of stepIndex/steps/countdown/
+  // status, so computing it here avoids an extra commit-then-rerender pass.
+  const [prevAriaStepIndex, setPrevAriaStepIndex] = useState<number | null>(null)
+  if (prevAriaStepIndex !== stepIndex) {
+    setPrevAriaStepIndex(stepIndex)
+    if (prevAriaStepIndex !== null) {
+      const step = steps[stepIndex]
+      if (step) {
+        setAnnouncement(step.isRest ? `Rest. ${step.label}` : `${step.exerciseName}. ${step.label}`)
+      }
     }
-  }, [countdown, status])
+  }
+
+  const [countdownAria, setCountdownAria] = useState<{ countdown: number | null; status: string | null; goFired: boolean }>(
+    { countdown: null, status: null, goFired: false }
+  )
+  if (countdownAria.countdown !== countdown || countdownAria.status !== status) {
+    if (countdown > 0) {
+      setCountdownAria({ countdown, status, goFired: false })
+      setAnnouncement(`Starting in ${countdown}`)
+    } else if (countdown === 0 && status === 'running' && !countdownAria.goFired) {
+      setCountdownAria({ countdown, status, goFired: true })
+      setAnnouncement('Go!')
+    } else {
+      setCountdownAria({ countdown, status, goFired: countdownAria.goFired })
+    }
+  }
 
   // Keyboard shortcuts (desktop)
   useEffect(() => {
@@ -275,7 +290,7 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
     return (
       <WorkoutComplete
         workoutName={workout.name}
-        startedAt={startedAt ?? Date.now()}
+        startedAt={startedAt ?? fallbackStartedAt}
         workoutId={workout.id}
         userId={userId}
         guestMode={guestMode}
