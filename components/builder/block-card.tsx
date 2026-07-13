@@ -95,17 +95,16 @@ export function BlockCard({ block, onUpdateConfig, onRemoveExercise, onRemoveBlo
           <SortableContext items={exerciseIds} strategy={verticalListSortingStrategy}>
             {block.exercises.length === 0 ? (
               <div className="text-xs text-muted-foreground text-center py-3">
-                <span className="hidden md:block">Drag exercises here</span>
                 {onMobileAdd ? (
                   <button
                     type="button"
                     onClick={onMobileAdd}
-                    className="md:hidden text-primary font-medium"
+                    className="text-primary font-medium"
                   >
                     + Add exercise
                   </button>
                 ) : (
-                  <span className="md:hidden">Drag exercises here</span>
+                  <span>No exercises yet</span>
                 )}
               </div>
             ) : (
@@ -131,7 +130,7 @@ export function BlockCard({ block, onUpdateConfig, onRemoveExercise, onRemoveBlo
                   <button
                     type="button"
                     onClick={onMobileAdd}
-                    className="md:hidden mt-1.5 w-full text-xs text-muted-foreground hover:text-primary py-1.5 border border-dashed border-border rounded-md transition-colors"
+                    className="mt-1.5 w-full text-xs text-muted-foreground hover:text-primary py-1.5 border border-dashed border-border rounded-md transition-colors"
                   >
                     + Add exercise
                   </button>
