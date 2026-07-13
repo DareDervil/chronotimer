@@ -11,7 +11,6 @@ import { groupUpcomingSteps } from '@/lib/timer/group-steps'
 import { getNextExerciseLabel } from '@/lib/timer/next-step-label'
 import { beep } from '@/lib/audio/beeps'
 import { TimerRing } from './timer-ring'
-import { UpcomingList } from './upcoming-list'
 import { FullProgramList } from './full-program-list'
 import { WorkoutComplete } from './workout-complete'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -463,7 +462,7 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
               </button>
             </div>
             <div className="overflow-y-auto px-3 py-3">
-              <UpcomingList steps={steps} stepIndex={stepIndex} />
+              <FullProgramList steps={steps} stepIndex={stepIndex} />
             </div>
           </Drawer.Content>
         </Drawer.Portal>
