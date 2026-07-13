@@ -2,10 +2,11 @@
 
 import { useState, useMemo, useRef } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { Search, Plus } from 'lucide-react'
+import { Search, Plus, Check } from 'lucide-react'
 import type { Exercise, ExerciseCategory } from '@/types/database'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
+import { toggleSelected, resolveSelected } from '@/lib/builder/selection'
 
 const CATEGORY_LABELS: Record<ExerciseCategory, string> = {
   warmup: 'Warm-up',
@@ -35,10 +36,12 @@ type SidebarTab = ExerciseCategory | 'custom'
 interface ExerciseSidebarProps {
   exercises: Exercise[]
   onTapAdd?: (exercise: Exercise) => void
+  onAddMany?: (exercises: Exercise[]) => void
 }
 
-export function ExerciseSidebar({ exercises, onTapAdd }: ExerciseSidebarProps) {
+export function ExerciseSidebar({ exercises, onTapAdd, onAddMany }: ExerciseSidebarProps) {
   const [search, setSearch] = useState('')
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [activeCategory, setActiveCategory] = useState<SidebarTab>('warmup')
   const [equipFilter, setEquipFilter] = useState<string | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
@@ -99,6 +102,16 @@ export function ExerciseSidebar({ exercises, onTapAdd }: ExerciseSidebarProps) {
     estimateSize: () => 44,
     overscan: 8,
   })
+
+  function handleToggleSelect(id: string) {
+    setSelectedIds((ids) => toggleSelected(ids, id))
+  }
+
+  function handleConfirmSelection() {
+    if (!onAddMany || selectedIds.length === 0) return
+    onAddMany(resolveSelected(exercises, selectedIds))
+    setSelectedIds([])
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -215,17 +228,49 @@ export function ExerciseSidebar({ exercises, onTapAdd }: ExerciseSidebarProps) {
                 <ExerciseRow
                   exercise={filtered[virtualItem.index]}
                   onTapAdd={onTapAdd}
+                  isSelected={selectedIds.includes(filtered[virtualItem.index].id)}
+                  onToggleSelect={onAddMany ? handleToggleSelect : undefined}
                 />
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {onAddMany && selectedIds.length > 0 && (
+        <div className="flex items-center gap-3 border-t border-border px-3 py-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => setSelectedIds([])}
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Clear
+          </button>
+          <span className="flex-1" />
+          <button
+            type="button"
+            onClick={handleConfirmSelection}
+            className="text-xs font-medium bg-primary text-primary-foreground rounded-md px-3 py-1.5 hover:opacity-90 transition-opacity"
+          >
+            Add {selectedIds.length} {selectedIds.length === 1 ? 'exercise' : 'exercises'}
+          </button>
+        </div>
+      )}
     </div>
   )
 }
 
-function ExerciseRow({ exercise, onTapAdd }: { exercise: Exercise; onTapAdd?: (exercise: Exercise) => void }) {
+function ExerciseRow({
+  exercise,
+  onTapAdd,
+  isSelected,
+  onToggleSelect,
+}: {
+  exercise: Exercise
+  onTapAdd?: (exercise: Exercise) => void
+  isSelected?: boolean
+  onToggleSelect?: (id: string) => void
+}) {
   const equipLabel = exercise.equipment
     .filter((e) => e !== 'none (bodyweight exercise)')
     .map((e) => EQUIPMENT_LABELS[e] ?? e)
@@ -233,6 +278,22 @@ function ExerciseRow({ exercise, onTapAdd }: { exercise: Exercise; onTapAdd?: (e
 
   return (
     <div className="flex items-center gap-1.5 rounded-md border bg-card px-2 py-1.5 text-sm cursor-default h-full">
+      {onToggleSelect && (
+        <button
+          type="button"
+          onClick={() => onToggleSelect(exercise.id)}
+          aria-pressed={!!isSelected}
+          aria-label={isSelected ? `Deselect ${exercise.name}` : `Select ${exercise.name}`}
+          className={cn(
+            'flex items-center justify-center h-4 w-4 rounded border shrink-0 transition-colors',
+            isSelected
+              ? 'bg-primary border-primary text-primary-foreground'
+              : 'border-border text-transparent hover:border-foreground/40'
+          )}
+        >
+          <Check className="h-3 w-3" />
+        </button>
+      )}
       <span className="flex-1 truncate text-sm leading-tight">{exercise.name}</span>
       {equipLabel.length > 0 ? (
         <span className="text-[10px] px-1.5 py-0.5 rounded-full border border-border text-muted-foreground shrink-0">
