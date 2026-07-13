@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Drawer } from '@/components/ui/drawer'
 import { ChevronUp, X } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { useWorkoutTimerStore, readSnapshot, type TimerSnapshot } from '@/lib/timer/store'
 import { groupUpcomingSteps } from '@/lib/timer/group-steps'
 import { getNextExerciseLabel } from '@/lib/timer/next-step-label'
@@ -289,10 +290,10 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
   // ── Active timer ───────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className={cn('flex flex-col', guestMode ? 'h-screen' : 'h-[calc(100vh-4rem)] md:h-screen')}>
       <span aria-live="assertive" aria-atomic="true" className="sr-only">{announcement}</span>
       {/* Top bar */}
-      <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-background/95 backdrop-blur border-b border-border">
+      <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-background/95 backdrop-blur border-b border-border shrink-0">
         <button
           onClick={handleBack}
           className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -309,7 +310,7 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
       </div>
 
       {/* Main content */}
-      <div className="flex flex-1 items-stretch">
+      <div className="flex flex-1 min-h-0 items-stretch">
         <div className="flex flex-col items-center justify-center flex-1 gap-6 px-4 py-8">
           <div className="text-center space-y-1">
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
@@ -353,7 +354,7 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
       </div>
 
       {/* Bottom controls */}
-      <div className="sticky bottom-0 z-10 flex items-center justify-around px-4 pt-4 bg-background/95 backdrop-blur border-t border-border" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
+      <div className="sticky bottom-0 z-10 flex items-center justify-around px-4 pt-4 bg-background/95 backdrop-blur border-t border-border shrink-0" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
         <button
           onClick={previous}
           disabled={stepIndex === 0}
