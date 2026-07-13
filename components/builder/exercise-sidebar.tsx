@@ -2,8 +2,7 @@
 
 import { useState, useMemo, useRef } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { useDraggable } from '@dnd-kit/core'
-import { Search, GripVertical, Plus } from 'lucide-react'
+import { Search, Plus } from 'lucide-react'
 import type { Exercise, ExerciseCategory } from '@/types/database'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
@@ -213,7 +212,7 @@ export function ExerciseSidebar({ exercises, onTapAdd }: ExerciseSidebarProps) {
                   paddingBottom: '4px',
                 }}
               >
-                <DraggableExercise
+                <ExerciseRow
                   exercise={filtered[virtualItem.index]}
                   onTapAdd={onTapAdd}
                 />
@@ -226,32 +225,14 @@ export function ExerciseSidebar({ exercises, onTapAdd }: ExerciseSidebarProps) {
   )
 }
 
-function DraggableExercise({ exercise, onTapAdd }: { exercise: Exercise; onTapAdd?: (exercise: Exercise) => void }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: `sidebar:${exercise.id}`,
-    data: { type: 'sidebar', exercise },
-  })
-
+function ExerciseRow({ exercise, onTapAdd }: { exercise: Exercise; onTapAdd?: (exercise: Exercise) => void }) {
   const equipLabel = exercise.equipment
     .filter((e) => e !== 'none (bodyweight exercise)')
     .map((e) => EQUIPMENT_LABELS[e] ?? e)
     .slice(0, 1)
 
   return (
-    <div
-      ref={setNodeRef}
-      className={cn(
-        'flex items-center gap-1.5 rounded-md border bg-card px-2 py-1.5 text-sm cursor-default h-full',
-        isDragging && 'opacity-40'
-      )}
-    >
-      <button
-        {...attributes}
-        {...listeners}
-        className="cursor-grab text-muted-foreground hover:text-foreground active:cursor-grabbing shrink-0 hidden md:flex"
-      >
-        <GripVertical className="h-3.5 w-3.5" />
-      </button>
+    <div className="flex items-center gap-1.5 rounded-md border bg-card px-2 py-1.5 text-sm cursor-default h-full">
       <span className="flex-1 truncate text-sm leading-tight">{exercise.name}</span>
       {equipLabel.length > 0 ? (
         <span className="text-[10px] px-1.5 py-0.5 rounded-full border border-border text-muted-foreground shrink-0">
