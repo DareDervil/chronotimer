@@ -21,6 +21,7 @@ import type { BlockConfig, BlockType, Exercise, PhaseType } from '@/types/databa
 import type { BuilderBlock, BuilderBlockExercise, BuilderPhase, BuilderWorkout } from '@/types/builder'
 import type { WorkoutWithStructure } from '@/types/database'
 import { createWorkout, deleteWorkout, updateWorkout } from '@/lib/actions/workouts'
+import { createBlockExercise } from '@/lib/builder/block-exercise'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
@@ -257,20 +258,24 @@ export function WorkoutBuilder({ exercises, initialWorkout, guestMode = false }:
   // ── Exercise mutations ────────────────────────────────────────────────────────
 
   const addExerciseToBlock = useCallback((blockId: string, exercise: Exercise) => {
-    const newBex: BuilderBlockExercise = {
-      id: uid(),
-      exercise_id: exercise.id,
-      exercise,
-      duration_s: null,
-      reps: null,
-      sets: null,
-      rest_after_s: 0,
-    }
+    const newBex = createBlockExercise(exercise, uid())
     updatePhases((phases) =>
       phases.map((p) => ({
         ...p,
         blocks: p.blocks.map((b) =>
           b.id === blockId ? { ...b, exercises: [...b.exercises, newBex] } : b
+        ),
+      }))
+    )
+  }, [])
+
+  const addExercisesToBlock = useCallback((blockId: string, exercisesToAdd: Exercise[]) => {
+    const newBexs = exercisesToAdd.map((exercise) => createBlockExercise(exercise, uid()))
+    updatePhases((phases) =>
+      phases.map((p) => ({
+        ...p,
+        blocks: p.blocks.map((b) =>
+          b.id === blockId ? { ...b, exercises: [...b.exercises, ...newBexs] } : b
         ),
       }))
     )
@@ -440,6 +445,12 @@ export function WorkoutBuilder({ exercises, initialWorkout, guestMode = false }:
     setPickerOpen(false)
   }
 
+  function handleAddManyExercises(exercisesToAdd: Exercise[]) {
+    if (!addTargetBlockId) return
+    addExercisesToBlock(addTargetBlockId, exercisesToAdd)
+    setPickerOpen(false)
+  }
+
   const hasBlocks = workout.phases.some((p) => p.blocks.length > 0)
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -561,7 +572,7 @@ export function WorkoutBuilder({ exercises, initialWorkout, guestMode = false }:
               <X className="h-4 w-4" />
             </button>
           </div>
-          <ExerciseSidebar exercises={exercises} onTapAdd={handleAddExercise} />
+          <ExerciseSidebar exercises={exercises} onTapAdd={handleAddExercise} onAddMany={handleAddManyExercises} />
         </Drawer.Content>
       </Drawer.Portal>
     </Drawer.Root>
