@@ -7,8 +7,7 @@ import { Drawer } from '@/components/ui/drawer'
 import { ChevronUp, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useWorkoutTimerStore, readSnapshot, type TimerSnapshot } from '@/lib/timer/store'
-import { groupUpcomingSteps } from '@/lib/timer/group-steps'
-import { getNextExerciseLabel } from '@/lib/timer/next-step-label'
+import { getNextExerciseLabel, getNextWorkStepLabel } from '@/lib/timer/next-step-label'
 import { beep } from '@/lib/audio/beeps'
 import { TimerRing } from './timer-ring'
 import { FullProgramList } from './full-program-list'
@@ -218,8 +217,7 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
   }
 
   const currentStep = steps[stepIndex]
-  const upcomingGroups = groupUpcomingSteps(steps, stepIndex)
-  const nextUpGroup = upcomingGroups.find((g) => !g.isCurrent) ?? null
+  const nextWorkLabel = currentStep ? getNextWorkStepLabel(steps, stepIndex) : null
   const nextExerciseLabel = currentStep ? getNextExerciseLabel(steps, stepIndex) : null
 
   // ── Resume prompt ─────────────────────────────────────────────────────────
@@ -335,13 +333,13 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
             repsDisplay={currentStep?.repsDisplay}
           />
 
-          {nextUpGroup && (
+          {nextWorkLabel && (
             <button
               onClick={() => setUpcomingOpen(true)}
               className="md:hidden flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Up next:{' '}
-              <span className="font-medium text-foreground">{nextUpGroup.exerciseName}</span>
+              <span className="font-medium text-foreground">{nextWorkLabel}</span>
               <ChevronUp className="h-3.5 w-3.5" />
             </button>
           )}
