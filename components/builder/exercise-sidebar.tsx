@@ -114,7 +114,7 @@ export function ExerciseSidebar({ exercises, onTapAdd, onAddMany }: ExerciseSide
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col flex-1 min-h-0">
       {/* Search */}
       <div className="relative p-3 pb-2 shrink-0">
         <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
