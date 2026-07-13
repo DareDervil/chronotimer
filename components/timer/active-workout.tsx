@@ -345,7 +345,7 @@ export function ActiveWorkout({ workout, userId, guestMode = false }: ActiveWork
           )}
         </div>
 
-        <aside className="hidden md:block w-[320px] lg:w-[380px] shrink-0 border-l border-border overflow-y-auto px-3 py-4">
+        <aside className="hidden md:block w-[360px] lg:w-[440px] shrink-0 border-l border-border overflow-y-auto px-4 py-5">
           <FullProgramList steps={steps} stepIndex={stepIndex} />
         </aside>
       </div>
